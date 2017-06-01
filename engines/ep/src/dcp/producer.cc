@@ -229,7 +229,7 @@ ENGINE_ERROR_CODE DcpProducer::streamRequest(uint32_t flags,
                                              uint64_t *rollback_seqno,
                                              dcp_add_failover_log callback) {
 
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     if (doDisconnect()) {
         return ENGINE_DISCONNECT;
     }
@@ -442,7 +442,7 @@ ENGINE_ERROR_CODE DcpProducer::streamRequest(uint32_t flags,
 ENGINE_ERROR_CODE DcpProducer::getFailoverLog(uint32_t opaque, uint16_t vbucket,
                                               dcp_add_failover_log callback) {
     (void) opaque;
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     if (doDisconnect()) {
         return ENGINE_DISCONNECT;
     }
@@ -633,7 +633,7 @@ ENGINE_ERROR_CODE DcpProducer::step(struct dcp_message_producers* producers) {
 ENGINE_ERROR_CODE DcpProducer::bufferAcknowledgement(uint32_t opaque,
                                                      uint16_t vbucket,
                                                      uint32_t buffer_bytes) {
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     log.acknowledge(buffer_bytes);
     return ENGINE_SUCCESS;
 }
@@ -641,7 +641,7 @@ ENGINE_ERROR_CODE DcpProducer::bufferAcknowledgement(uint32_t opaque,
 ENGINE_ERROR_CODE DcpProducer::control(uint32_t opaque, const void* key,
                                        uint16_t nkey, const void* value,
                                        uint32_t nvalue) {
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     const char* param = static_cast<const char*>(key);
     std::string keyStr(static_cast<const char*>(key), nkey);
     std::string valueStr(static_cast<const char*>(value), nvalue);
@@ -733,7 +733,7 @@ ENGINE_ERROR_CODE DcpProducer::control(uint32_t opaque, const void* key,
 }
 
 bool DcpProducer::handleResponse(protocol_binary_response_header* resp) {
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     if (doDisconnect()) {
         return false;
     }
@@ -789,7 +789,7 @@ bool DcpProducer::handleResponse(protocol_binary_response_header* resp) {
 }
 
 ENGINE_ERROR_CODE DcpProducer::closeStream(uint32_t opaque, uint16_t vbucket) {
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     if (doDisconnect()) {
         return ENGINE_DISCONNECT;
     }
@@ -949,7 +949,7 @@ bool DcpProducer::handleSlowStream(uint16_t vbid,
 }
 
 void DcpProducer::closeAllStreams() {
-    lastReceiveTime = ep_current_time();
+    messageReceived();
     std::vector<uint16_t> vbvector;
     {
         // Need to synchronise the disconnect and clear, therefore use
@@ -1197,6 +1197,10 @@ void DcpProducer::createCheckpointProcessorTask() {
 
 void DcpProducer::scheduleCheckpointProcessorTask() {
     ExecutorPool::get()->schedule(checkpointCreatorTask);
+}
+
+void DcpProducer::messageReceived() {
+    lastReceiveTime = ep_current_time();
 }
 
 void DcpProducer::scheduleCheckpointProcessorTask(const stream_t& s) {

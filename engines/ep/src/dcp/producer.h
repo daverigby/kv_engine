@@ -284,6 +284,12 @@ protected:
      */
     void scheduleCheckpointProcessorTask();
 
+    /**
+     * Record that a message has been received on this connection, so we can
+     * update our last received time.
+     */
+    void messageReceived();
+
     struct {
         rel_time_t sendTime;
         uint32_t opaque;
