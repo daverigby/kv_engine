@@ -845,8 +845,8 @@ bool ActiveStreamCheckpointProcessorTask::run() {
     bool expected = true;
     if (notified.compare_exchange_strong(expected, false)
         || !queueEmpty()) {
-        // snooze for 0, essentially yielding and allowing other tasks a go
-        snooze(0.0);
+        // wakeUp, essentially yielding and allowing other tasks a go.
+        wakeUp();
     }
 
     return true;

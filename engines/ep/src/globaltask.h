@@ -115,6 +115,9 @@ public:
      */
     virtual void snooze(const double secs);
 
+    /// Wake up a task, setting it to run as soon as possible.
+    void wakeUp();
+
     /**
      * Returns the id of this task.
      *
