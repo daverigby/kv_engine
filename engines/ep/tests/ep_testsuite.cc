@@ -6980,6 +6980,7 @@ static enum test_result test_mb19687_fixed(ENGINE_HANDLE* h,
         eng_stats.insert(eng_stats.end(),
                          {"ep_ephemeral_full_policy",
                           "ep_ephemeral_metadata_purge_age",
+                          "ep_ephemeral_metadata_purge_chunk_duration",
                           "ep_ephemeral_metadata_purge_interval",
 
                           "vb_active_auto_delete_count",
@@ -7024,6 +7025,7 @@ static enum test_result test_mb19687_fixed(ENGINE_HANDLE* h,
         config_stats.insert(config_stats.end(),
                             {"ep_ephemeral_full_policy",
                              "ep_ephemeral_metadata_purge_age",
+                             "ep_ephemeral_metadata_purge_chunk_duration",
                              "ep_ephemeral_metadata_purge_interval"});
     }
 
