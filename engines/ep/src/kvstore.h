@@ -167,7 +167,7 @@ struct vbucket_state {
         lastSnapStart = 0;
         lastSnapEnd = 0;
         maxCas = 0;
-        failovers.assign("[{\"id\":0, \"seq\":0}]");
+        failovers.clear();
     }
 
     vbucket_state_t state;
