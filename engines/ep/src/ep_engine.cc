@@ -5044,11 +5044,13 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::getMeta(const void* cookie,
     return rv;
 }
 
-protocol_binary_response_status EventuallyPersistentEngine::decodeWithMetaOptions(
-                              protocol_binary_request_delete_with_meta* request,
-                              GenerateCas& generateCas,
-                              bool& skipConflictResolution,
-                              int& keyOffset) {
+protocol_binary_response_status
+EventuallyPersistentEngine::decodeWithMetaOptions(
+        protocol_binary_request_delete_with_meta* request,
+        GenerateCas& generateCas,
+        CheckConflicts& checkConflicts,
+        PermittedVBStates& permittedVBStates,
+        int& keyOffset) {
     uint8_t extlen = request->message.header.request.extlen;
     keyOffset = 0;
     bool forceFlag = false;
@@ -5060,7 +5062,7 @@ protocol_binary_response_status EventuallyPersistentEngine::decodeWithMetaOption
         keyOffset = 4; // 4 bytes for options
 
         if (options & SKIP_CONFLICT_RESOLUTION_FLAG) {
-            skipConflictResolution = true;
+            checkConflicts = CheckConflicts::No;
         }
 
         if (options & FORCE_ACCEPT_WITH_META_OPS) {
@@ -5070,16 +5072,29 @@ protocol_binary_response_status EventuallyPersistentEngine::decodeWithMetaOption
         if (options & REGENERATE_CAS) {
             generateCas = GenerateCas::Yes;
         }
+
+        if (options & FORCE_WITH_META_OP) {
+            permittedVBStates.set(vbucket_state_replica);
+            permittedVBStates.set(vbucket_state_pending);
+            checkConflicts = CheckConflicts::No;
+        }
     }
 
     // Validate options
-    // If regenerate CAS then skip conflict resolution must be set
-    // If LWW force must be set
-    // If !LWW then force cannot be set).
-    if ((generateCas == GenerateCas::Yes && !skipConflictResolution) ||
-        (configuration.getConflictResolutionType() == "lww" && !forceFlag &&
-         generateCas == GenerateCas::No) ||
-        (forceFlag && (configuration.getConflictResolutionType() != "lww"))) {
+    // 1) If GenerateCas::Yes then we must have CheckConflicts::No
+    bool check1 = generateCas == GenerateCas::Yes &&
+                  checkConflicts == CheckConflicts::Yes;
+
+    // 2) If bucket is LWW and forceFlag is not set and GenerateCas::No
+    bool check2 = configuration.getConflictResolutionType() == "lww" &&
+                  !forceFlag && generateCas == GenerateCas::No;
+
+    // 3) If bucket is not LWW then forceFlag must be false.
+    bool check3 =
+            configuration.getConflictResolutionType() != "lww" && forceFlag;
+
+    // So if either check1/2/3 is true, return EINVAL
+    if (check1 || check2 || check3) {
         return PROTOCOL_BINARY_RESPONSE_EINVAL;
     }
 
@@ -5146,12 +5161,16 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::setWithMeta(const void* cookie,
     uint64_t seqno = ntohll(request->message.body.seqno);
     uint64_t cas = ntohll(request->message.body.cas);
 
-    bool skipConflictResolution = false;
+    CheckConflicts checkConflicts = CheckConflicts::Yes;
+    PermittedVBStates permittedVBStates{vbucket_state_active};
     GenerateCas generateCas = GenerateCas::No;
     int keyOffset = 0;
     protocol_binary_response_status error = PROTOCOL_BINARY_RESPONSE_SUCCESS;
-    if ((error = decodeWithMetaOptions(request, generateCas,
-                                       skipConflictResolution, keyOffset)) !=
+    if ((error = decodeWithMetaOptions(request,
+                                       generateCas,
+                                       checkConflicts,
+                                       permittedVBStates,
+                                       keyOffset)) !=
         PROTOCOL_BINARY_RESPONSE_SUCCESS) {
         return sendResponse(response, NULL, 0, NULL, 0, NULL, 0,
                             PROTOCOL_BINARY_RAW_BYTES, error, 0, cookie);
@@ -5208,7 +5227,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::setWithMeta(const void* cookie,
                           commandCas,
                           &bySeqno,
                           cookie,
-                          skipConflictResolution,
+                          permittedVBStates,
+                          checkConflicts,
                           allowExisting,
                           GenerateBySeqno::Yes,
                           generateCas,
@@ -5272,7 +5292,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::setWithMeta(
         uint64_t& cas,
         uint64_t* seqno,
         const void* cookie,
-        bool force,
+        PermittedVBStates permittedVBStates,
+        CheckConflicts checkConflicts,
         bool allowExisting,
         GenerateBySeqno genBySeqno,
         GenerateCas genCas,
@@ -5309,7 +5330,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::setWithMeta(
                                      cas,
                                      seqno,
                                      cookie,
-                                     force,
+                                     permittedVBStates,
+                                     checkConflicts,
                                      allowExisting,
                                      genBySeqno,
                                      genCas,
@@ -5363,12 +5385,16 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::deleteWithMeta(
     uint8_t datatype = request->message.header.request.datatype;
     size_t vallen = bodylen - nkey - extlen;
 
-    bool skipConflictResolution = false;
+    CheckConflicts checkConflicts = CheckConflicts::Yes;
+    PermittedVBStates permittedVBStates{vbucket_state_active};
     GenerateCas generateCas = GenerateCas::No;
     int keyOffset = 0;
     protocol_binary_response_status error = PROTOCOL_BINARY_RESPONSE_SUCCESS;
-    if ((error = decodeWithMetaOptions(request, generateCas,
-                                      skipConflictResolution, keyOffset)) !=
+    if ((error = decodeWithMetaOptions(request,
+                                       generateCas,
+                                       checkConflicts,
+                                       permittedVBStates,
+                                       keyOffset)) !=
         PROTOCOL_BINARY_RESPONSE_SUCCESS) {
         return sendResponse(response, NULL, 0, NULL, 0, NULL, 0,
                             PROTOCOL_BINARY_RAW_BYTES, error, 0, cookie);
@@ -5405,7 +5431,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::deleteWithMeta(
                               cas,
                               &bySeqno,
                               cookie,
-                              skipConflictResolution,
+                              permittedVBStates,
+                              checkConflicts,
                               true /*allowExisting*/,
                               GenerateBySeqno::Yes,
                               generateCas,
@@ -5417,7 +5444,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::deleteWithMeta(
                                  cas,
                                  &bySeqno,
                                  cookie,
-                                 skipConflictResolution,
+                                 permittedVBStates,
+                                 checkConflicts,
                                  GenerateBySeqno::Yes,
                                  generateCas,
                                  emd);
@@ -5462,7 +5490,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::deleteWithMeta(
         uint64_t& cas,
         uint64_t* seqno,
         const void* cookie,
-        bool force,
+        PermittedVBStates permittedVBStates,
+        CheckConflicts checkConflicts,
         GenerateBySeqno genBySeqno,
         GenerateCas genCas,
         cb::const_byte_buffer emd) {
@@ -5480,7 +5509,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::deleteWithMeta(
                                     seqno,
                                     vbucket,
                                     cookie,
-                                    force,
+                                    permittedVBStates,
+                                    checkConflicts,
                                     itemMeta,
                                     false /*allowExisting*/,
                                     genBySeqno,
