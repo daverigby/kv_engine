@@ -23,6 +23,8 @@
 #include "ephemeral_vb.h"
 #include "seqlist.h"
 
+#include <phosphor/phosphor.h>
+
 DCPBackfillMemory::DCPBackfillMemory(EphemeralVBucketPtr evb,
                                      const active_stream_t& s,
                                      uint64_t startSeqno,
@@ -109,7 +111,15 @@ DCPBackfillMemoryBuffered::DCPBackfillMemoryBuffered(EphemeralVBucketPtr evb,
     : DCPBackfill(s, startSeqno, endSeqno),
       weakVb(evb),
       state(BackfillState::Init),
-      rangeItr(nullptr) {
+      rangeItr(nullptr),
+      vbid(evb->getId()) {
+    TRACE_ASYNC_START1(
+            "dcp/backfill", "DCPBackfillMemoryBuffered", this, "vbid", vbid);
+}
+
+DCPBackfillMemoryBuffered::~DCPBackfillMemoryBuffered() {
+    TRACE_ASYNC_END1(
+            "dcp/backfill", "DCPBackfillMemoryBuffered", this, "vbid", vbid);
 }
 
 backfill_status_t DCPBackfillMemoryBuffered::run() {
@@ -127,6 +137,13 @@ backfill_status_t DCPBackfillMemoryBuffered::run() {
         cancel();
         return backfill_finished;
     }
+
+    TRACE_EVENT2("dcp/backfill",
+                 "MemoryBuffered::run",
+                 "vbid",
+                 evb->getId(),
+                 "state",
+                 uint8_t(state));
 
     switch (state) {
     case BackfillState::Init:
@@ -148,6 +165,8 @@ void DCPBackfillMemoryBuffered::cancel() {
 }
 
 backfill_status_t DCPBackfillMemoryBuffered::create(EphemeralVBucket& evb) {
+    TRACE_EVENT1("dcp/backfill", "MemoryBuffered::create", "vbid", evb.getId());
+
     /* Create range read cursor */
     try {
         auto rangeItrOptional = evb.makeRangeIterator(true /*isBackfill*/);
@@ -214,6 +233,13 @@ backfill_status_t DCPBackfillMemoryBuffered::create(EphemeralVBucket& evb) {
 }
 
 backfill_status_t DCPBackfillMemoryBuffered::scan() {
+    TRACE_EVENT2("dcp/backfill",
+                 "MemoryBuffered::scan",
+                 "currSeqno",
+                 rangeItr.curr(),
+                 "endSeqno",
+                 endSeqno);
+
     if (!(stream->isActive())) {
         /* Stop prematurely if the stream state changes */
         complete(true);
@@ -244,6 +270,7 @@ backfill_status_t DCPBackfillMemoryBuffered::scan() {
             /* Try backfill again later; here we do not snooze because we
                want to check if other backfills can be run by the
                backfillMgr */
+            TRACE_INSTANT("dcp/backfill", "ScanDefer", "seqno", seqnoDbg);
             stream->getLogger().log(EXTENSION_LOG_WARNING,
                                     "vb:%" PRIu16
                                     " Deferring backfill at seqno:%" PRIi64
@@ -262,6 +289,9 @@ backfill_status_t DCPBackfillMemoryBuffered::scan() {
 }
 
 void DCPBackfillMemoryBuffered::complete(bool cancelled) {
+    TRACE_EVENT1(
+            "dcp/backfill", "MemoryBuffered::complete", "cancelled", cancelled);
+
     uint16_t vbid = getVBucketId();
 
     /* [EPHE TODO]: invalidate cursor sooner before it gets deleted */
