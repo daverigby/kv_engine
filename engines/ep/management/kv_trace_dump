@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+
+# Tool to dump a KV-Engine trace file to JSON; which can be viewed
+# with Chrome's trace viewer (chrome://tracing).
+
+from __future__ import print_function
+import argparse
+import distutils.spawn
+import os
+import subprocess
+import sys
+
+
+parser = argparse.ArgumentParser(
+    description='Dump a KV-Engine trace file as JSON.')
+parser.add_argument('--mcctl', help='Path to mcctl binary')
+parser.add_argument('-H', '--hostname',
+                    help='host:port to connect to (e.g. localhost:11210')
+parser.add_argument('-u', '--username', help='Username')
+parser.add_argument('-P', '--password', help='Password')
+parser.add_argument('-r', '--restart', type=bool, default=True,
+                    help='Restart tracing after dumping the trace file')
+parser.add_argument('outfile', type=argparse.FileType('w'))
+
+args = parser.parse_args()
+
+# Locate the mcctl binary
+# 1. If the user specified a location, use that one.
+if args.mcctl:
+    mcctl_bin = args.mcctl
+else:
+    # 2. Try the path
+    mcctl_bin = distutils.spawn.find_executable('mcctl')
+    if not mcctl_bin:
+        # 3. Try relative to this script (for when we are installed).
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        mcctl_bin = os.path.join(dir_path, "../../bin/mcctl")
+
+if not os.path.isfile(mcctl_bin):
+    print ("Error: No mcctl program found at {} - cannot contine.".format(
+        mcctl_bin), file=sys.stderr)
+    sys.exit(1)
+
+mcctl_args = [mcctl_bin,
+              '-h', args.hostname,
+              '-u', args.username,
+              '-P', args.password]
+
+subprocess.check_call(mcctl_args + ['set', 'trace.stop'])
+uuid = subprocess.check_output(mcctl_args + ['get', 'trace.dump.begin'])
+uuid = uuid.strip()
+
+# Repeatedly get chunks, until we get one with zero length.
+while True:
+    chunk = subprocess.check_output(
+        mcctl_args + ['get', 'trace.dump.chunk?id=' + uuid]).strip()
+    if len(chunk) == 0:
+        break
+    args.outfile.write(chunk)
+
+subprocess.check_call(mcctl_args + ['set', 'trace.dump.clear', uuid])
+
+if args.restart:
+    subprocess.check_call(mcctl_args + ['set', 'trace.start'])
