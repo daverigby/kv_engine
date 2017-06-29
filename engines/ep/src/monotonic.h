@@ -19,14 +19,41 @@
 
 #include <limits>
 
+
+/// Policy class for handling non-monotonic updates by simply ignoring them.
+template <class T>
+struct IgnorePolicy {
+    void nonMonotonic(const T& curValue, const T& newValue) {
+        // Ignore the update.
+    }
+};
+
+/// Policy class for handling non-monotonic updates by throwing std::logic_error
+template <class T>
+struct ThrowExceptionPolicy {
+    void nonMonotonic(const T& curValue, const T& newValue) {
+        throw std::logic_error("Monotonic<> invariant failed: new value (" +
+                               std::to_string(newValue) +
+                               ") is not greater than current value (" +
+                               std::to_string(curValue) + ")");
+    }
+};
+
 /**
  * Monotonic is a class template for simple types T. It provides guarentee
  * of updating the class objects by only values that are greater than what is
- * contained at the time of update
+ * contained at the time of update - i.e. the object must be
+ * Strictly Increasing.
+ *
  * Note: This is not atomic/thread-safe
+ * @tparam T value type used to represent the value.
+ * @tparam OrderReversePolicy Policy class which controls the behaviour if
+ *         an operation would break the monotonic invariant.
  */
-template <typename T>
-class Monotonic {
+template <typename T,
+          template <class> class OrderReversedPolicy =
+                  IgnorePolicy>
+class Monotonic : public OrderReversedPolicy<T> {
 public:
     Monotonic(const T val = std::numeric_limits<T>::min()) : val(val) {
     }
@@ -37,6 +64,8 @@ public:
     Monotonic& operator=(const Monotonic<T>& other) {
         if (val < other.val) {
             val = other.val;
+        } else {
+            OrderReversedPolicy<T>::nonMonotonic(val, other);
         }
         return *this;
     }
@@ -44,6 +73,8 @@ public:
     Monotonic& operator=(const T& v) {
         if (val < v) {
             val = v;
+        } else {
+            OrderReversedPolicy<T>::nonMonotonic(val, v);
         }
         return *this;
     }
@@ -59,4 +90,53 @@ public:
 
 private:
     T val;
+};
+
+/**
+ * Variant of the Monotonic class, except that the type T is wrapped in
+ * std::atomic, so all updates are atomic. T must be TriviallyCopyable.
+ */
+template <typename T, template <class> class OrderReversedPolicy = IgnorePolicy>
+class AtomicMonotonic : public OrderReversedPolicy<T> {
+public:
+    AtomicMonotonic(T val = std::numeric_limits<T>::min()) : val(val) {
+    }
+
+    AtomicMonotonic(const AtomicMonotonic<T>& other) : val(other.val) {
+    }
+
+    AtomicMonotonic& operator=(T desired) {
+        while (true) {
+            T current = val.load();
+            if (current < desired) {
+                if (val.compare_exchange_weak(current, desired)) {
+                    break;
+                }
+            } else {
+                OrderReversedPolicy<T>::nonMonotonic(current, desired);
+                break;
+            }
+        }
+        return *this;
+    }
+
+    operator T() const {
+        return val;
+    }
+
+    T load() const {
+        return val;
+    }
+
+    void store(T desired) {
+        operator=(desired);
+    }
+
+    /* Can be used to lower the value */
+    void reset(T desired) {
+        val = desired;
+    }
+
+private:
+    std::atomic<T> val;
 };

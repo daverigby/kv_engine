@@ -247,7 +247,7 @@ backfill_status_t DCPBackfillMemoryBuffered::scan() {
             stream->getLogger().log(EXTENSION_LOG_WARNING,
                                     "vb:%" PRIu16
                                     " Deferring backfill at seqno:%" PRIi64
-                                    "as scan buffer or backfill buffer is full",
+                                    " as scan buffer or backfill buffer is full",
                                     getVBucketId(),
                                     seqnoDbg);
             return backfill_success;
