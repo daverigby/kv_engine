@@ -204,6 +204,13 @@ protected:
 
     std::atomic<bool> itemsReady;
     std::mutex streamMutex;
+
+    /**
+     * Ordered queue of DcpResponses to be sent on the stream.
+     * Elements are added to this queue by reading from disk/memory etc, and
+     * are removed when sending over the network to our peer.
+     * The readyQ owns the elements in it. TODO: Convert to unique_ptr<>
+     */
     std::queue<DcpResponse*> readyQ;
 
     // Number of items in the readyQ that are not meta items. Used for
@@ -383,7 +390,7 @@ protected:
 
     /* The last sequence number queued from disk or memory and is
        snapshotted and put onto readyQ */
-    std::atomic<uint64_t> lastReadSeqno;
+    AtomicMonotonic<uint64_t, ThrowExceptionPolicy> lastReadSeqno;
 
     /* backfillRemaining is a stat recording the amount of
      * items remaining to be read from disk.  It is an atomic
