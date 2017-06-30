@@ -1966,8 +1966,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::initialize(const char* config) {
     maxFailoverEntries = configuration.getMaxFailoverEntries();
 
     // Start updating the variables from the config!
-    StoredValue::setMutationMemoryThreshold(
-                                      configuration.getMutationMemThreshold());
+    VBucket::setMutationMemoryThreshold(
+            configuration.getMutationMemThreshold());
 
     if (configuration.getMaxSize() == 0) {
         configuration.setMaxSize(std::numeric_limits<size_t>::max());
@@ -2110,7 +2110,8 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::itemAllocate(
         return ENGINE_E2BIG;
     }
 
-    if (!hasAvailableSpace(sizeof(Item) + sizeof(Blob) + key.size() + nbytes)) {
+    if (!hasMemoryForItemAllocation(sizeof(Item) + sizeof(Blob) + key.size() +
+                                    nbytes)) {
         return memoryCondition();
     }
 
