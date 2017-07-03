@@ -2070,10 +2070,10 @@ ENGINE_ERROR_CODE PassiveStream::processMutation(MutationResponse* mutation) {
         consumer->getLogger().log(
                 EXTENSION_LOG_WARNING,
                 "vb:%" PRIu16
-                " Got an error code %d while trying to process "
+                " Got error '%s' while trying to process "
                 "mutation with seqno:%" PRId64,
                 vb_,
-                ret,
+                cb::to_string(cb::to_engine_errc(ret)).c_str(),
                 mutation->getItem()->getBySeqno());
     } else {
         handleSnapshotEnd(vb, *mutation->getBySeqno());
@@ -2134,10 +2134,10 @@ ENGINE_ERROR_CODE PassiveStream::processDeletion(MutationResponse* deletion) {
         consumer->getLogger().log(
                 EXTENSION_LOG_WARNING,
                 "vb:%" PRIu16
-                " Got an error code %d while trying to process "
+                " Got error '%s' while trying to process "
                 "deletion with seqno:%" PRId64,
                 vb_,
-                ret,
+                cb::to_string(cb::to_engine_errc(ret)).c_str(),
                 *deletion->getBySeqno());
     } else {
         handleSnapshotEnd(vb, *deletion->getBySeqno());
@@ -2180,10 +2180,10 @@ ENGINE_ERROR_CODE PassiveStream::processSystemEvent(
         consumer->getLogger().log(
                 EXTENSION_LOG_WARNING,
                 "vb:%" PRIu16
-                " Got an error code %d while trying to process "
+                " Got error '%s' while trying to process "
                 "system event",
                 vb_,
-                rv);
+                cb::to_string(cb::to_engine_errc(rv)).c_str());
     } else {
         handleSnapshotEnd(vb, *event.getBySeqno());
     }
