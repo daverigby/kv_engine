@@ -458,6 +458,11 @@ KVBucket::KVBucket(EventuallyPersistentEngine& theEngine)
     config.addValueChangedListener("dcp_min_compression_ratio",
                                    new EPStoreValueChangeListener(*this));
 
+    // Always create the item pager; but initially disable, leaving scheduling
+    // up to the specific KVBucket subclasses.
+    itemPagerTask = std::make_shared<ItemPager>(&engine, stats);
+    disableItemPager();
+
     initializeWarmupTask();
 }
 
@@ -469,10 +474,6 @@ bool KVBucket::initialize() {
     }
 
     startWarmupTask();
-
-    // Always create the item pager; but leave scheduling up to the specific
-    // KVBucket subclasses.
-    itemPagerTask = std::make_shared<ItemPager>(&engine, stats);
 
     initializeExpiryPager(config);
 
