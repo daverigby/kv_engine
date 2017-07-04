@@ -243,24 +243,32 @@ TEST_P(STItemPagerTest, ExpiredItemsDeletedFirst) {
     // Advance time so when the pager runs it will find expired items.
     TimeTraveller billSPrestonEsq(2);
 
+    EXPECT_EQ(countA + countB, store->getVBucket(vbid)->getNumItems());
+
     runItemPager();
+
+    // Ensure deletes are flushed to disk (so any temp items removed from
+    // HashTable).
+    if (GetParam() == "persistent") {
+        store->flushVBucket(vbid);
+    }
 
     // Check which items remain. We should have deleted all of the items with
     // a TTL, as they should have been considered first).
 
-    // Initial documents should still exist:
+    // Initial documents should still exist. Note we need to use getMetaData
+    // here as get() would expire the item on access.
     for (size_t ii = 0; ii < countA; ii++) {
         auto key = makeStoredDocKey("key_" + std::to_string(ii));
         auto result = store->get(key, vbid, nullptr, get_options_t());
         EXPECT_EQ(ENGINE_SUCCESS, result.getStatus()) << "For key:" << key;
     }
 
-    // Documents which had a TTL should be deleted:
-    for (size_t ii = 0; ii < countB; ii++) {
-        auto key = makeStoredDocKey("xxx_" + std::to_string(ii));
-        auto result = store->get(key, vbid, nullptr, get_options_t());
-        EXPECT_EQ(ENGINE_KEY_ENOENT, result.getStatus()) << "For key:" << key;
-    }
+    // Documents which had a TTL should be deleted. Note it's hard to check
+    // these keys without triggering an expire-on-access (and hence doing
+    // the item pager's job for it. Therefore just check the count of items -
+    // it should have decreased by the number of items with TTLs.
+    EXPECT_EQ(countA, store->getVBucket(vbid)->getNumItems());
 }
 
 /**
