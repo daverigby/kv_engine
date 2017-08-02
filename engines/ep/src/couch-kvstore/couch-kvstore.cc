@@ -161,6 +161,20 @@ static DocKey makeDocKey(const sized_buf buf, bool restoreNamespace) {
     }
 }
 
+// Encode a periodic sync specified in bytes to the correct
+// couchstore_open_flags encoding.
+static couchstore_open_flags encodePeriodicSyncFlags(uint64_t periodBytes) {
+    // Convert to encoding supported by couchstore - KB power-of-2 value.
+    // Round up to whole kilobyte units.
+    const uint64_t kilobytes = (periodBytes + 1023) / 1024;
+    // Calculate the shift amount (what is the log2 power)
+    uint64_t shiftAmount = std::log2(kilobytes);
+    // Saturate if the user specified more than the encodable amount.
+    shiftAmount = std::min(shiftAmount, uint64_t(30));
+    // Finally, encode in couchstore_open flags
+    return ((shiftAmount + 1)) << 24;
+}
+
 struct GetMultiCbCtx {
     GetMultiCbCtx(CouchKVStore &c, uint16_t v, vb_bgfetch_queue_t &f) :
         cks(c), vbId(v), fetches(f) {}
@@ -962,6 +976,12 @@ bool CouchKVStore::compactDBInternal(compaction_ctx* hook_ctx,
      */
     if(!configuration.getBuffered()) {
         flags |= COUCHSTORE_OPEN_FLAG_UNBUFFERED;
+    }
+
+    // Should automatic fsync() be configured for compaction?
+    const auto periodicSyncBytes = configuration.getPeriodicSyncBytes();
+    if (periodicSyncBytes != 0) {
+        flags |= encodePeriodicSyncFlags(periodicSyncBytes);
     }
 
     // Perform COMPACTION of vbucket.couch.rev into vbucket.couch.rev.compact
