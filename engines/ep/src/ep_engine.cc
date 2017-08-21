@@ -2638,6 +2638,17 @@ ENGINE_ERROR_CODE EventuallyPersistentEngine::doEngineStats(const void *cookie,
                                  KVBucketIface::KVSOption::BOTH)) {
         add_casted_stat("ep_io_compaction_write_bytes",  value, add_stat, cookie);
     }
+    if (kvBucket->getKVStoreStat("io_document_read_bytes",
+                                 value,
+                                 KVBucketIface::KVSOption::BOTH)) {
+        add_casted_stat("ep_io_document_read_bytes", value, add_stat, cookie);
+    }
+    if (kvBucket->getKVStoreStat("io_document_write_bytes",
+                                 value,
+                                 KVBucketIface::KVSOption::BOTH)) {
+        add_casted_stat("ep_io_document_write_bytes", value, add_stat, cookie);
+    }
+    // Following are forestdb-specific:
     if (kvBucket->getKVStoreStat("Block_cache_hits", value,
                                  KVBucketIface::KVSOption::RW)) {
         add_casted_stat("ep_block_cache_hits", value, add_stat, cookie);

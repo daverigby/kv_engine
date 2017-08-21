@@ -1216,6 +1216,12 @@ bool CouchKVStore::getStat(const char* name, size_t& value)  {
     } else if (strcmp("io_compaction_write_bytes", name) == 0) {
         value = st.fsStatsCompaction.totalBytesWritten;
         return true;
+    } else if (strcmp("io_document_read_bytes", name) == 0) {
+        value = st.io_read_bytes;
+        return true;
+    } else if (strcmp("io_document_write_bytes", name) == 0) {
+        value = st.io_write_bytes;
+        return true;
     }
 
     return false;
@@ -1621,7 +1627,7 @@ couchstore_error_t CouchKVStore::fetchDoc(Db* db,
         docValue = GetValue(std::move(it));
         // update ep-engine IO stats
         ++st.io_num_read;
-        st.io_read_bytes += docinfo->id.size;
+        st.io_read_bytes += (docinfo->id.size + docinfo->rev_meta.size);
     } else {
         Doc *doc = nullptr;
         size_t valuelen = 0;
@@ -1684,7 +1690,7 @@ couchstore_error_t CouchKVStore::fetchDoc(Db* db,
 
         // update ep-engine IO stats
         ++st.io_num_read;
-        st.io_read_bytes += (docinfo->id.size + valuelen);
+        st.io_read_bytes += (docinfo->id.size + docinfo->rev_meta + valuelen);
 
         couchstore_free_document(doc);
     }
@@ -1741,6 +1747,8 @@ int CouchKVStore::recordDbDump(Db *db, DocInfo *docinfo, void *ctx) {
 
         if (errCode == COUCHSTORE_SUCCESS) {
             value = doc->data;
+            // update ep-engine IO stats - document meta+body.
+            st.io_read_bytes += doc->data.size;
             if (doc->data.size) {
                 if ((openOptions & DECOMPRESS_DOC_BODIES) == 0) {
                     // We always store the document bodies compressed on disk,
