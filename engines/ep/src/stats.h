@@ -164,15 +164,6 @@ public:
         timingLog(NULL),
         mem_merge_count_threshold(1),
         mem_merge_bytes_threshold(0),
-        localMemCounter([](void* ptr) -> void {
-                if (ptr != nullptr) {
-                    // This HAS to be a non-bucket deallocation
-                    // or else the callbacks could try to update counters
-                    // that no longer exist
-                    SystemAllocationGuard system_alloc_guard;
-                    delete (TLMemCounter*)ptr;
-                }
-            }),
         maxDataSize(DEFAULT_MAX_DATA_SIZE) {}
 
     ~EPStats() {
@@ -626,9 +617,19 @@ private:
 
         // no.of times mem accounting has happened
         size_t count = 0;
+
+        static void destructor(void* ptr) {
+            if (ptr != nullptr) {
+                // This HAS to be a non-bucket deallocation
+                // or else the callbacks could try to update counters
+                // that no longer exist
+                SystemAllocationGuard system_alloc_guard;
+                delete (TLMemCounter*)ptr;
+            }
+        };
     };
 
-    ThreadLocalPtr<TLMemCounter> localMemCounter;
+    ThreadLocalPtr<TLMemCounter, TLMemCounter::destructor> localMemCounter;
 
     //! Max allowable memory size.
     std::atomic<size_t> maxDataSize;

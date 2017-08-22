@@ -77,8 +77,6 @@ public:
     }
 
 private:
-    // No use in Win32. Only for compatibility
-    ThreadLocalDestructor dtor;
     DWORD tlsIndex;
 };
 
