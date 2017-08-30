@@ -8,35 +8,13 @@
 
 #include <thread>
 
-/**
- * Return an implementation of the allocator hooks API which is connected to
- * the underlying AllocHooks implementation.
- */
-ALLOCATOR_HOOKS_API* getWorkingHooksAPI() {
-    static ALLOCATOR_HOOKS_API hooksApi;
-    hooksApi.add_new_hook = AllocHooks::add_new_hook;
-    hooksApi.remove_new_hook = AllocHooks::remove_new_hook;
-    hooksApi.add_delete_hook = AllocHooks::add_delete_hook;
-    hooksApi.remove_delete_hook = AllocHooks::remove_delete_hook;
-    hooksApi.get_extra_stats_size = AllocHooks::get_extra_stats_size;
-    hooksApi.get_allocator_stats = AllocHooks::get_allocator_stats;
-    hooksApi.get_allocation_size = AllocHooks::get_allocation_size;
-    hooksApi.get_detailed_stats = AllocHooks::get_detailed_stats;
-    hooksApi.release_free_memory = AllocHooks::release_free_memory;
-    hooksApi.enable_thread_cache = AllocHooks::enable_thread_cache;
-    hooksApi.get_allocator_property = AllocHooks::get_allocator_property;
-    return &hooksApi;
-}
-
 class ThreadLocalPtrTest : public ::testing::Test {
 protected:
-    void SetUp() override {
-        tracker = MemoryTracker::getInstance(*getWorkingHooksAPI());
-    }
 
     size_t getBytesAllocated() {
-        tracker->updateStats();
-        return tracker->getTotalBytesAllocated();
+        allocator_stats stats = {0};
+        AllocHooks::get_allocator_stats(&stats);
+        return stats.allocated_size;
     }
 
 protected:
@@ -71,23 +49,39 @@ TEST_F(ThreadLocalPtrTest, ObjectDestructionThreaded) {
     const auto startingMem = getBytesAllocated();
     {
         ThreadLocalPtr<std::string> tls;
+
         // Create and immediately delete a thread.
-        std::thread t1(
-                [this](ThreadLocalPtr<std::string>& tls) {
-                    size_t pre = getBytesAllocated();
-                    tls = new std::string("thread A");
-                    size_t post = getBytesAllocated();
-                    std::cerr << "MEM T1:" << getBytesAllocated() << "\n";
-                    EXPECT_GT(post, pre);
-                },
-                std::ref(tls));
+        // There's some caching of allocations going on in libc / libstdc++;
+        // so we create & destroy 10 instances, then check that memory
+        // is within a small margin of error (i.e. hasn't grown by 10x object
+        // size).
+        for (size_t ii = 0; ii < 10; ++ii) {
+            std::thread t1(
+                    [](size_t ii, ThreadLocalPtr<std::string>& tls) {
+                        // Allocate a large, string. If we are freeing items
+                        // correctly then this should be freed when the thread
+                        // exits.
+                        tls = new std::string(10000, char(ii));
+                    },
+                    ii,
+                    std::ref(tls));
+            t1.join();
+            std::cerr << "MEM :" << getBytesAllocated() << "\n";
+        }
 
         // After threads deleted; memory should have been freed (even though
-        // 'tls'
-        // object is still here).
-        t1.join();
+        // 'tls' object is still here). Allow a "fudge" factor of 1K due to
+        // aforementioned caching.
+        const size_t fudgeFactor = 1024;
+        const auto endMem = getBytesAllocated();
+        EXPECT_LT(startingMem, endMem + fudgeFactor);
+        EXPECT_LT(endMem, startingMem + fudgeFactor);
+
+        std::cerr << "MEM 7:" << getBytesAllocated() << "\n";
     }
-    EXPECT_EQ(startingMem, getBytesAllocated());
+    std::cerr << "MEM 8:" << getBytesAllocated() << "\n";
+
+    std::cerr << "MEM:" << getBytesAllocated();
 }
 
 #if 0
