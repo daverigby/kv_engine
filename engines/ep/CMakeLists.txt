@@ -291,6 +291,7 @@ ADD_EXECUTABLE(ep-engine_ep_unit_tests
                tests/module_tests/stored_value_test.cc
                tests/module_tests/systemevent_test.cc
                tests/module_tests/test_helpers.cc
+               tests/module_tests/threadlocal_test.cc
                tests/module_tests/vbucket_test.cc
                tests/module_tests/warmup_test.cc
                $<TARGET_OBJECTS:ep_objs>
