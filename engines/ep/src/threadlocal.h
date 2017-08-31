@@ -25,43 +25,38 @@
 // thread local variable dtor
 using ThreadLocalDestructor = void (*)(void*);
 
+#ifdef WIN32
+#include "threadlocal_win32.h"
+template <typename T>
+using ThreadLocalBase = ThreadLocalWin32<T>;
+#else
+#include "threadlocal_posix.h"
+template <typename T>
+using ThreadLocalBase = ThreadLocalPosix<T>;
+#endif
+
 /**
  * Container of thread-local data
  * @tparam T type to be stored
- * @tparam destructor Optional destructor to be invoked on thread-local on
- *         thread exit / ThreadLocal destruction.
  */
-template <typename T, class Deleter = std::default_delete<T> class ThreadLocal {
+template <typename T>
+class ThreadLocal {
 public:
     ThreadLocal()
       : tls(destructorWrapper) {
     }
 
     ~ThreadLocal() {
-        for (const auto& value : values) {
-            auto* as_void = reinterpret_cast<void*>(value.second->data);
-            if (as_void != nullptr) {
-                destructor(as_void);
-            }
-            delete value.second;
-        }
     }
 
     void set(T data) {
-        // Delete the old container
-        DataWrapper* old = tls.get();
-        if (old) {
-            delete old;
-        }
-
-        // Set the new wrapped value in TLS
-        auto* wrapper = new DataWrapper({data, this});
-        tls.set(wrapper);
+        // Set the new wrapped value in TLS (deleting any old wrapped value).
+        tls.reset(new DataWrapper({data, this}));
 
         // Update the map
         {
             std::lock_guard<std::mutex> lh(mutex);
-            values[std::this_thread::get_id()] = wrapper;
+            values[std::this_thread::get_id()] = tls.get();
         }
     }
 
@@ -84,9 +79,15 @@ public:
     }
 
 private:
+    /**
+     * Object which owns the actual thread-local user data; plus a pointer
+     * back to the ThreadLocal object responsible for owning the object. This
+     * is used to ensure the underlying object is deleted when the owning
+     * object is deleted.
+     */
     struct DataWrapper {
         T data;
-        ThreadLocal<T, destructor>* owner;
+        ThreadLocal<T>* owner;
     };
 
     static void destructorWrapper(void* v) {
@@ -102,33 +103,20 @@ private:
         delete value;
     }
 
-    ThreadLocal<DataWrapper*, nullptr> tls;
+    ThreadLocal<std::unique_ptr<DataWrapper>> tls;
     std::mutex mutex;
-    std::unordered_map<std::thread::id, DataWrapper*> values;
+    std::unordered_map<std::thread::id, T> values;
 };
-
-#ifdef WIN32
-#include "threadlocal_win32.h"
-template <typename T>
-class ThreadLocal<T, nullptr> : public ThreadLocalWin32<T> {
-    using ThreadLocalWin32<T>::ThreadLocalWin32;
-};
-#else
-#include "threadlocal_posix.h"
-template <typename T>
-class ThreadLocal<T, nullptr> : public ThreadLocalPosix<T> {
-    using ThreadLocalPosix<T>::ThreadLocalPosix;
-};
-#endif
 
 /**
- * Container for a thread-local pointer.
+ * Container for a thread-local pointer which is non-owning - i.e. when
+ * ThreadLocalPtr is deleted the pointed-to object is not destructed.
  */
-template <typename T, ThreadLocalDestructor destructor = nullptr>
-class ThreadLocalPtr : public ThreadLocal<T*, destructor> {
-    using base_class = ThreadLocal<T*, destructor>;
+template <typename T>
+class ThreadLocalPtr : public ThreadLocal<T*> {
+    using base_class = ThreadLocal<T*>;
 public:
-    using ThreadLocal<T*, destructor>::ThreadLocal;
+    using ThreadLocal<T*>::ThreadLocal;
 
     T *operator ->() {
         return base_class::get();
@@ -143,4 +131,29 @@ public:
     }
 };
 
-#endif  // SRC_THREADLOCAL_H_
+/**
+ * Container for a thread-local pointer which is owning - i.e. when
+ * ThreadLocalPtr is deleted the pointed-to object will automatically be
+ * deleted.
+ */
+template <typename T, class Deleter = std::default_delete<T>>
+class OwningThreadLocalPtr : public ThreadLocal<std::unique_ptr<T, Deleter>> {
+    using base_class = ThreadLocal<std::unique_ptr<T, Deleter>>;
+
+public:
+    using base_class::ThreadLocal;
+
+    T* operator->() {
+        return base_class::get();
+    }
+
+    T operator*() {
+        return *base_class::get();
+    }
+
+    void operator=(T* newValue) {
+        this->set(newValue);
+    }
+};
+
+#endif // SRC_THREADLOCAL_H_
