@@ -46,7 +46,7 @@ TEST_F(ThreadLocalPtrTest, ObjectDestruction) {
 // Test that destructing the ThreadLocalPtr owning object doesn't leak when
 // created on multiple threads.
 TEST_F(ThreadLocalPtrTest, ObjectDestructionThreaded) {
-    const auto startingMem = getBytesAllocated();
+    const auto startMem = getBytesAllocated();
     {
         ThreadLocalPtr<std::string> tls;
 
@@ -66,7 +66,6 @@ TEST_F(ThreadLocalPtrTest, ObjectDestructionThreaded) {
                     ii,
                     std::ref(tls));
             t1.join();
-            std::cerr << "MEM :" << getBytesAllocated() << "\n";
         }
 
         // After threads deleted; memory should have been freed (even though
@@ -74,14 +73,10 @@ TEST_F(ThreadLocalPtrTest, ObjectDestructionThreaded) {
         // aforementioned caching.
         const size_t fudgeFactor = 1024;
         const auto endMem = getBytesAllocated();
-        EXPECT_LT(startingMem, endMem + fudgeFactor);
-        EXPECT_LT(endMem, startingMem + fudgeFactor);
-
-        std::cerr << "MEM 7:" << getBytesAllocated() << "\n";
+        const auto memDifference =
+                std::abs(ssize_t(startMem) - ssize_t(endMem));
+        EXPECT_LT(memDifference, fudgeFactor);
     }
-    std::cerr << "MEM 8:" << getBytesAllocated() << "\n";
-
-    std::cerr << "MEM:" << getBytesAllocated();
 }
 
 #if 0

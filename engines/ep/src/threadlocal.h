@@ -29,11 +29,9 @@ using ThreadLocalDestructor = void (*)(void*);
  * Container of thread-local data
  * @tparam T type to be stored
  * @tparam destructor Optional destructor to be invoked on thread-local on
- *         thread exit / ThreadLocal destruction (separate template
- *         specialisation for nullptr)
+ *         thread exit / ThreadLocal destruction.
  */
-template<typename T, ThreadLocalDestructor destructor = nullptr>
-class ThreadLocal {
+template <typename T, class Deleter = std::default_delete<T> class ThreadLocal {
 public:
     ThreadLocal()
       : tls(destructorWrapper) {
