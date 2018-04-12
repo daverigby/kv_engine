@@ -23,7 +23,6 @@ target_link_libraries(tracing_bench
     benchmark
     mcd_tracing
     mcd_util
-    memcached_logger
     platform
     xattr
     ${MALLOC_LIBRARIES})
