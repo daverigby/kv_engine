@@ -68,7 +68,7 @@ const std::vector<Span>& Tracer::getDurations() const {
 
 Span::Duration Tracer::getTotalMicros() const {
     if (vecSpans.empty()) {
-        return std::chrono::microseconds(0);
+        return Span::Duration::zero();
     }
     const auto& top = vecSpans[0];
     // If the Span has not yet been closed; return the duration up to now.
@@ -79,24 +79,19 @@ Span::Duration Tracer::getTotalMicros() const {
     return top.duration;
 }
 
-/**
- * Encode the total micros in 2 bytes. Gives a much better coverage
- * and reasonable error rates on larger values.
- * Idea by Brett Lawson [@brett19]
- * Max Time: 02:00.125042 (120125042)
- */
-uint16_t Tracer::getEncodedMicros(uint64_t actual) const {
-    static const uint64_t maxVal = 120125042;
-    if (0 == actual) {
-        actual = getTotalMicros().count();
-    }
-    actual = std::min(actual, maxVal);
-    return uint16_t(std::round(std::pow(actual * 2, 1.0 / 1.74)));
+uint16_t Tracer::getEncodedMicros() const {
+    return encodeMicros(getTotalMicros());
 }
 
-std::chrono::microseconds Tracer::decodeMicros(uint16_t encoded) const {
-    auto usecs = uint64_t(std::pow(encoded, 1.74) / 2);
-    return std::chrono::microseconds(usecs);
+uint16_t Tracer::encodeMicros(Span::Duration duration) {
+    static constexpr Span::Duration maxVal(120125042);
+    duration = std::min(duration, maxVal);
+    return uint16_t(std::round(std::pow(duration.count() * 2, 1.0 / 1.74)));
+}
+
+Span::Duration Tracer::decodeMicros(uint16_t encoded) {
+    const auto usecs = uint64_t(std::pow(encoded, 1.74) / 2);
+    return Span::Duration(usecs);
 }
 
 void Tracer::clear() {

@@ -88,10 +88,23 @@ public:
     Span::Duration getTotalMicros() const;
 
     /**
-     * Max time period represented here is 02:00.125042
+     * Return the total duration of this Tracer as a compressed
+     * (variable-precision) 2-byte encoding - see encodeMicros().
      */
-    uint16_t getEncodedMicros(uint64_t actual = 0) const;
-    std::chrono::microseconds decodeMicros(uint16_t encoded) const;
+    uint16_t getEncodedMicros() const;
+
+    /**
+     * Encode the given Duration into a compressed (variable-precision)
+     * 2-byte encoding, with range 0.. 02m00.125042s
+     *
+     * Gives a much better coverage and reasonable error rates on larger values.
+     */
+    static uint16_t encodeMicros(Span::Duration);
+
+    /**
+     * Decode the given 2-byte compressed duration back to a Span::Duration.
+     */
+    static Span::Duration decodeMicros(uint16_t encoded);
 
     // clear the collected trace data;
     void clear();

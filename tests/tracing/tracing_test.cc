@@ -65,8 +65,8 @@ TEST_F(TracingTest, ErrorRate) {
                               78821369,
                               118916406};
     for (auto micros : micros_list) {
-        auto repMicros = tracer.getEncodedMicros(micros);
-        auto decoded = uint64_t(tracer.decodeMicros(repMicros).count());
+        auto repMicros = cb::tracing::Tracer::encodeMicros(cb::tracing::Span::Duration(micros));
+        auto decoded = uint64_t(cb::tracing::Tracer::decodeMicros(repMicros).count());
 
         if (decoded > micros) {
             std::swap(micros, decoded);
