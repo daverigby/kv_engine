@@ -446,26 +446,6 @@ public:
     }
 
     /**
-     * Get the size of the OpenSSL BIO buffers
-     *
-     * @return the size (in bytes) of the OpenSSL BIOs
-     */
-    unsigned int getBioDrainBufferSize() const {
-        return bio_drain_buffer_sz;
-    }
-
-    /**
-     * Set the size of the OpenSSL BIO buffers
-     *
-     * @param bio_drain_buffer_sz the new size in bytes
-     */
-    void setBioDrainBufferSize(unsigned int bio_drain_buffer_sz) {
-        Settings::bio_drain_buffer_sz = bio_drain_buffer_sz;
-        has.bio_drain_buffer_sz = true;
-        notify_changed("bio_drain_buffer_sz");
-    }
-
-    /**
      * Get the maximum size of a packet the system should try to inspect.
      * Packets exceeding this limit will cause the client to be disconnected
      *
@@ -876,11 +856,6 @@ protected:
     std::string root;
 
     /**
-     * size of the SSL bio buffers
-     */
-    unsigned int bio_drain_buffer_sz;
-
-    /**
      * is datatype json/snappy enabled?
      */
     bool datatype_json;
@@ -1013,42 +988,41 @@ public:
      */
     struct {
         bool always_collect_trace_info = false;
-        bool rbac_file;
-        bool privilege_debug;
-        bool threads;
-        bool interfaces;
-        bool logger;
-        bool audit;
-        bool reqs_per_event_high_priority;
-        bool reqs_per_event_med_priority;
-        bool reqs_per_event_low_priority;
-        bool default_reqs_per_event;
-        bool verbose;
-        bool connection_idle_time;
-        bool bio_drain_buffer_sz;
-        bool datatype_json;
-        bool datatype_snappy;
-        bool root;
-        bool breakpad;
-        bool max_packet_size;
-        bool ssl_cipher_list;
-        bool ssl_cipher_order;
-        bool ssl_cipher_suites;
-        bool ssl_minimum_protocol;
-        bool client_cert_auth;
-        bool topkeys_size;
-        bool sasl_mechanisms;
-        bool ssl_sasl_mechanisms;
-        bool dedupe_nmvb_maps;
-        bool error_maps;
-        bool xattr_enabled;
-        bool collections_enabled;
-        bool opcode_attributes_override;
-        bool topkeys_enabled;
-        bool tracing_enabled;
-        bool stdin_listener;
-        bool scramsha_fallback_salt;
-        bool external_auth_service;
+        bool rbac_file = false;
+        bool privilege_debug = false;
+        bool threads = false;
+        bool interfaces = false;
+        bool logger = false;
+        bool audit = false;
+        bool reqs_per_event_high_priority = false;
+        bool reqs_per_event_med_priority = false;
+        bool reqs_per_event_low_priority = false;
+        bool default_reqs_per_event = false;
+        bool verbose = false;
+        bool connection_idle_time = false;
+        bool datatype_json = false;
+        bool datatype_snappy = false;
+        bool root = false;
+        bool breakpad = false;
+        bool max_packet_size = false;
+        bool ssl_cipher_list = false;
+        bool ssl_cipher_order = false;
+        bool ssl_cipher_suites = false;
+        bool ssl_minimum_protocol = false;
+        bool client_cert_auth = false;
+        bool topkeys_size = false;
+        bool sasl_mechanisms = false;
+        bool ssl_sasl_mechanisms = false;
+        bool dedupe_nmvb_maps = false;
+        bool error_maps = false;
+        bool xattr_enabled = false;
+        bool collections_enabled = false;
+        bool opcode_attributes_override = false;
+        bool topkeys_enabled = false;
+        bool tracing_enabled = false;
+        bool stdin_listener = false;
+        bool scramsha_fallback_salt = false;
+        bool external_auth_service = false;
         bool active_external_users_push_interval = false;
         bool max_connections = false;
         bool system_connections = false;
