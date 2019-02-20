@@ -38,9 +38,15 @@ protected:
 
     void SetUp() {
 #if WIN32
+#if _DEBUG
+		// On Windows in debug mode an empty list is larger for
+		// diagnostic state.
+        extra = 40;
+#else
         // On windows for an empty list we still allocate space for
         // containing one element.
         extra = perElementOverhead;
+#endif
 #endif
     }
 

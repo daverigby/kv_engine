@@ -66,27 +66,6 @@ TEST(CheckpointIteratorTest, emptyList) {
     EXPECT_EQ(c.size(), iteratorCount);
 }
 
-// Try to increment beyond end.
-TEST(CheckpointIteratorTest, incrementBeyondEnd) {
-    ListContainer c;
-    ASSERT_EQ(0, c.size());
-    auto cursor = listContainerEnd(c);
-
-    ++cursor;
-    auto compare = (listContainerEnd(c) == cursor);
-    EXPECT_TRUE(compare);
-}
-
-// Try to decrement beyond begin.
-TEST(CheckpointIteratorTest, decrementBeyondBegin) {
-    ListContainer c;
-    ASSERT_EQ(0, c.size());
-    auto cursor = listContainerBegin(c);
-    --cursor;
-    auto compare = (listContainerBegin(c) == cursor);
-    EXPECT_TRUE(compare);
-}
-
 // Iterate forwards with only a null element in the list.
 TEST(CheckpointIteratorTest, nullFirstElementIterateForwards) {
     ListContainer c;

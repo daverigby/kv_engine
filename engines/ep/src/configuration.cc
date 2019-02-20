@@ -225,9 +225,10 @@ ValueChangedValidator *Configuration::setValueValidator(const std::string &key,
                                             ValueChangedValidator *validator) {
     ValueChangedValidator *ret = nullptr;
     LockHolder lh(mutex);
-    if (attributes.find(key) != attributes.end()) {
-        ret = attributes[key]->validator.release();
-        attributes[key]->validator.reset(validator);
+    const auto it = attributes.find(key);
+    if (it != attributes.end()) {
+        ret = it->second->validator.release();
+        it->second->validator.reset(validator);
     }
 
     return ret;
@@ -237,9 +238,10 @@ Requirement* Configuration::setRequirements(const std::string& key,
                                             Requirement* requirement) {
     Requirement* ret = nullptr;
     LockHolder lh(mutex);
-    if (attributes.find(key) != attributes.end()) {
-        ret = attributes[key]->requirement.release();
-        attributes[key]->requirement.reset(requirement);
+	const auto it = attributes.find(key);
+    if (it != attributes.end()) {
+        ret = it->second->requirement.release();
+        it->second->requirement.reset(requirement);
     }
 
     return ret;
