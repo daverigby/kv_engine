@@ -701,7 +701,12 @@ MutationStatus HashTable::insertFromWarmup(
         bool eject,
         bool keyMetaDataOnly,
         item_eviction_policy_t evictionPolicy) {
-    auto htRes = findForWrite(itm.getKey());
+    const auto perspective = itm.isPending()
+                                     ? HashTable::Perspective::Pending
+                                     : HashTable::Perspective::Committed;
+
+    auto htRes = find(
+            itm.getKey(), TrackReference::No, WantsDeleted::No, perspective);
     auto* v = htRes.storedValue;
     auto& hbl = htRes.lock;
 
@@ -740,8 +745,7 @@ MutationStatus HashTable::insertFromWarmup(
                 return MutationStatus::InvalidCas;
             }
         }
-        auto res = unlocked_updateStoredValue(hbl, *v, itm);
-        v = res.storedValue;
+        Expects(unlocked_restoreValue(hbl.getHTLock(), itm, *v));
     }
 
     v->markClean();

@@ -63,6 +63,7 @@ public:
         Initialize,
         CreateVBuckets,
         EstimateDatabaseItemCount,
+        LoadPreparedSyncWrites,
         KeyDump,
         LoadingAccessLog,
         CheckForAccessLog,
@@ -128,6 +129,9 @@ private:
  *                     |
  *                     V
  *          [EstimateDatabaseItemCount]
+ *                     |
+ *                     V
+ *          [LoadPreparedSyncWrites]
  *                     |
  *                Eviction mode?
  *               /           \
@@ -268,6 +272,13 @@ private:
     void estimateDatabaseItemCount(uint16_t shardId);
 
     /**
+     * Loads all prepared SyncWrites for each vBucket in the given shard
+     * - Performs a KVStore scan against the DurabilityPrepare namespace,
+     *   loading all found documents into memory.
+     */
+    void loadPreparedSyncWrites(uint16_t shardId);
+
+    /**
      * [Value-eviction only]
      * Loads all keys into memory for each vBucket in the given shard.
      */
@@ -316,6 +327,7 @@ private:
     void scheduleInitialize();
     void scheduleCreateVBuckets();
     void scheduleEstimateDatabaseItemCount();
+    void scheduleLoadPreparedSyncWrites();
     void scheduleKeyDump();
     void scheduleCheckForAccessLog();
     void scheduleLoadingAccessLog();
@@ -377,6 +389,7 @@ private:
     friend class WarmupInitialize;
     friend class WarmupCreateVBuckets;
     friend class WarmupEstimateDatabaseItemCount;
+    friend class WarmupLoadPreparedSyncWrites;
     friend class WarmupKeyDump;
     friend class WarmupCheckforAccessLog;
     friend class WarmupLoadAccessLog;
