@@ -607,10 +607,9 @@ GetValue RocksDBKVStore::getWithHeader(void* dbHandle,
                                        Vbid vb,
                                        GetMetaOnly getMetaOnly,
                                        bool fetchDelete) {
-    std::string value;
     const auto vbh = getVBHandle(vb);
-    // TODO RDB: use a PinnableSlice to avoid some memcpy
     rocksdb::Slice keySlice = getKeySlice(key);
+    rocksdb::PinnableSlice value;
     rocksdb::Status s = rdb->Get(
             rocksdb::ReadOptions(), vbh->defaultCFH.get(), keySlice, &value);
     if (!s.ok()) {
@@ -624,7 +623,7 @@ void RocksDBKVStore::getMulti(Vbid vb, vb_bgfetch_queue_t& itms) {
     for (auto& it : itms) {
         auto& key = it.first;
         rocksdb::Slice keySlice = getKeySlice(key);
-        std::string value;
+        rocksdb::PinnableSlice value;
         const auto vbh = getVBHandle(vb);
         rocksdb::Status s = rdb->Get(rocksdb::ReadOptions(),
                                      vbh->defaultCFH.get(),
@@ -643,6 +642,36 @@ void RocksDBKVStore::getMulti(Vbid vb, vb_bgfetch_queue_t& itms) {
             }
         }
     }
+}
+
+void RocksDBKVStore::getRange(Vbid vb,
+                              const DiskDocKey& startKey,
+                              const DiskDocKey& endKey,
+                              const KVStore::GetRangeCb& cb) {
+    auto startSlice = getKeySlice(startKey);
+    auto endSlice = getKeySlice(endKey);
+    rocksdb::ReadOptions rangeOptions;
+    rangeOptions.iterate_upper_bound = &endSlice;
+
+    const auto vbh = getVBHandle(vb);
+    std::unique_ptr<rocksdb::Iterator> it(
+            rdb->NewIterator(rangeOptions, vbh->defaultCFH.get()));
+    if (!it) {
+        throw std::logic_error(
+                "RocksDBKVStore::getRange: rocksdb::Iterator to Default Column "
+                "Family is nullptr");
+    }
+
+    for (it->Seek(startSlice); it->Valid(); it->Next()) {
+        auto key = DiskDocKey{it->key().data(), it->key().size()};
+        auto gv = makeGetValue(vb, key, it->value());
+        if (gv.item->isDeleted()) {
+            // Ignore deleted items.
+            continue;
+        }
+        cb(std::move(gv));
+    }
+    Expects(it->status().ok());
 }
 
 void RocksDBKVStore::reset(Vbid vbucketId) {
@@ -945,11 +974,10 @@ std::unique_ptr<Item> RocksDBKVStore::makeItem(Vbid vb,
 
 GetValue RocksDBKVStore::makeGetValue(Vbid vb,
                                       const DiskDocKey& key,
-                                      const std::string& value,
+                                      const rocksdb::Slice& value,
                                       GetMetaOnly getMetaOnly) {
-    rocksdb::Slice sval(value);
     return GetValue(
-            makeItem(vb, key, sval, getMetaOnly), ENGINE_SUCCESS, -1, 0);
+            makeItem(vb, key, value, getMetaOnly), ENGINE_SUCCESS, -1, 0);
 }
 
 void RocksDBKVStore::readVBState(const VBHandle& vbh) {
@@ -1105,11 +1133,19 @@ rocksdb::Status RocksDBKVStore::saveVBStateToBatch(const VBHandle& vbh,
 
 rocksdb::ColumnFamilyOptions RocksDBKVStore::getBaselineDefaultCFOptions() {
     rocksdb::ColumnFamilyOptions cfOptions;
-    // Enable Point Lookup Optimization for the 'default' Column Family
-    // Note: whatever we give in input as 'block_cache_size_mb', the Block
-    // Cache will be reset with the shared 'blockCache' of size
-    // 'rocksdb_block_cache_size'
-    cfOptions.OptimizeForPointLookup(1);
+    // Note: While we *mostly* use only point-lookup, still need to support
+    // range lookups for warmup - to be able to identify all Prepared Sync
+    // Writes. As such, use similar options to OptimizeForPointLookup(),
+    // but with the default index_type which supports binary search.
+    rocksdb::BlockBasedTableOptions blockBasedOptions;
+    blockBasedOptions.filter_policy.reset(
+            rocksdb::NewBloomFilterPolicy(10, false));
+    cfOptions.table_factory.reset(
+            rocksdb::NewBlockBasedTableFactory(blockBasedOptions));
+
+    // Note: Block Cache is *not* configured here - it is later reset with the
+    // shared 'blockCache' of size 'rocksdb_block_cache_size'
+
     return cfOptions;
 }
 
