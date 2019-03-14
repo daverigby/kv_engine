@@ -619,54 +619,30 @@ StoredValue* HashTable::unlocked_find(const DocKey& key,
                                       WantsDeleted wantsDeleted,
                                       TrackReference trackReference,
                                       Perspective perspective) {
-    // Scan through all elements in the hash bucket chain looking for a
-    // matching key.
-    StoredValue* foundSv = nullptr;
     for (StoredValue* v = values[bucket_num].get().get(); v;
             v = v->getNext().get().get()) {
         if (v->hasKey(key)) {
-            // When using Committed perspective; only return Committed
-            // items - skip pending.
-            if ((perspective == Perspective::Committed) & v->isPending()) {
+            // When using Committed perspective; should only return Committed
+            // items.
+            if ((perspective == Perspective::Committed) &&
+                (v->getCommitted() == CommittedState::Pending)) {
                 continue;
             }
+            if (trackReference == TrackReference::Yes && !v->isDeleted()) {
+                updateFreqCounter(*v);
 
-            // For Perspective::Pending, given we could have both pending *and*
-            // Committed items for the same key, we need to check the entire
-            // bucket chain for a Pending even if we first find a Committed
-            // item.
-            if ((perspective == Perspective::Pending) && v->isCommitted()) {
-                // Note the committed item found, continue checking for a
-                // pending.
-                Expects(!foundSv);
-                foundSv = v;
-                continue;
+                // @todo remove the referenced call when eviction algorithm is
+                // updated to use the frequency counter value.
+                v->referenced();
+            }
+            if (wantsDeleted == WantsDeleted::Yes || !v->isDeleted()) {
+                return v;
             } else {
-                // Found matching item and don't need to check further.
-                foundSv = v;
-                break;
+                return NULL;
             }
         }
     }
-
-    if (!foundSv) {
-        return nullptr;
-    }
-
-    // Ignore deleted items unless explicitly requested.
-    if (foundSv->isDeleted() && wantsDeleted == WantsDeleted::No) {
-        return nullptr;
-    }
-
-    // Update frequency counter if requested for non-deleted items.
-    if (trackReference == TrackReference::Yes && !foundSv->isDeleted()) {
-        updateFreqCounter(*foundSv);
-
-        // @todo remove the referenced call when eviction algorithm is
-        // updated to use the frequency counter value.
-        foundSv->referenced();
-    }
-    return foundSv;
+    return NULL;
 }
 
 HashTable::FindROResult HashTable::findForRead(const DocKey& key,
@@ -725,11 +701,7 @@ MutationStatus HashTable::insertFromWarmup(
         bool eject,
         bool keyMetaDataOnly,
         item_eviction_policy_t evictionPolicy) {
-    const auto perspective = itm.isPending()
-                                     ? HashTable::Perspective::Pending
-                                     : HashTable::Perspective::Committed;
-    auto htRes = find(
-            itm.getKey(), TrackReference::No, WantsDeleted::No, perspective);
+    auto htRes = findForWrite(itm.getKey());
     auto* v = htRes.storedValue;
     auto& hbl = htRes.lock;
 
