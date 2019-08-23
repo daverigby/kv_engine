@@ -24,6 +24,7 @@
 #include "taskqueue.h"
 
 #include <nlohmann/json.hpp>
+#include <phosphor/phosphor.h>
 #include <platform/checked_snprintf.h>
 #include <platform/string_hex.h>
 #include <platform/sysinfo.h>
@@ -326,6 +327,7 @@ bool ExecutorPool::cancel(size_t taskId, bool eraseTask) {
 }
 
 bool ExecutorPool::_wake(size_t taskId) {
+    TRACE_EVENT1("ep-engine/task", "ExecutorPool::wake", "taskId", taskId);
     LockHolder lh(tMutex);
     std::map<size_t, TaskQpair>::iterator itr = taskLocator.find(taskId);
     if (itr != taskLocator.end()) {

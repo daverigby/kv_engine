@@ -19,6 +19,7 @@
 #include "executorthread.h"
 #include "taskqueue.h"
 
+#include <phosphor/phosphor.h>
 #include <cmath>
 
 TaskQueue::TaskQueue(ExecutorPool *m, task_type_t t, const char *nm) :
@@ -97,8 +98,8 @@ bool TaskQueue::_doSleep(ExecutorThread &t,
         // zzz....
         const auto snooze = wakeTime - t.getCurTime();
 
-        if (snooze > std::chrono::seconds((int)round(MIN_SLEEP_TIME))) {
-            mutex.wait_for(lock, MIN_SLEEP_TIME);
+        if (snooze > std::chrono::seconds(7)) {
+            mutex.wait_for(lock, 7.0);
         } else {
             mutex.wait_for(lock, snooze);
         }
@@ -245,6 +246,8 @@ void TaskQueue::schedule(ExTask &task) {
 }
 
 void TaskQueue::_wake(ExTask &task) {
+    TRACE_EVENT1(
+            "ep-engine/task", "TaskQueue::wake", "taskId", task.get()->getId());
     const std::chrono::steady_clock::time_point now =
             std::chrono::steady_clock::now();
     TaskQueue* sleepQ;

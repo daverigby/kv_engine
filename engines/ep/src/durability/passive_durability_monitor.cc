@@ -29,6 +29,7 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <gsl.h>
+#include <phosphor/phosphor.h>
 #include <utilities/logtags.h>
 #include <unordered_map>
 
@@ -155,6 +156,10 @@ int64_t PassiveDurabilityMonitor::getHighCompletedSeqno() const {
 
 void PassiveDurabilityMonitor::addSyncWrite(
         queued_item item, boost::optional<int64_t> overwritingPrepareSeqno) {
+    TRACE_EVENT1("durability",
+                 "PassiveDM::addSyncWrite",
+                 "seqno",
+                 item->getBySeqno());
     auto durReq = item->getDurabilityReqs();
 
     if (durReq.getLevel() == cb::durability::Level::None) {
@@ -230,6 +235,10 @@ size_t PassiveDurabilityMonitor::getNumAborted() const {
 }
 
 void PassiveDurabilityMonitor::notifySnapshotEndReceived(uint64_t snapEnd) {
+    TRACE_EVENT1("durability",
+                 "PassiveDM::notifySnapshotEndReceived",
+                 "seqno",
+                 snapEnd);
     { // state locking scope
         auto s = state.wlock();
         s->receivedSnapshotEnds.push({int64_t(snapEnd),
@@ -275,6 +284,7 @@ void PassiveDurabilityMonitor::storeSeqnoAck(int64_t prevHps, int64_t newHps) {
 }
 
 void PassiveDurabilityMonitor::sendSeqnoAck() {
+    TRACE_EVENT0("durability", "PassiveDM::sendSeqnoAck");
     // Hold the lock throughout to ensure that we do not race with another ack
     auto seqno = seqnoToAck.wlock();
     if (*seqno != 0) {

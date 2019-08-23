@@ -27,6 +27,7 @@
 
 #include <boost/optional/optional_io.hpp>
 #include <memcached/protocol_binary.h>
+#include <phosphor/phosphor.h>
 
 ActiveStream::ActiveStream(EventuallyPersistentEngine* e,
                            std::shared_ptr<DcpProducer> p,
@@ -851,12 +852,20 @@ bool ActiveStream::nextCheckpointItem() {
 }
 
 void ActiveStream::nextCheckpointItemTask() {
+    TRACE_EVENT1("DcpProducer",
+                 "ActiveStream::nextCheckpointItemTask",
+                 "vbid",
+                 vb_.get());
     // MB-29369: Obtain stream mutex here
     LockHolder lh(streamMutex);
     nextCheckpointItemTask(lh);
 }
 
 void ActiveStream::nextCheckpointItemTask(const LockHolder& streamMutex) {
+    TRACE_EVENT1("DcpProducer",
+                 "ActiveStream::nextCheckpointItemTask(locked)",
+                 "vbid",
+                 vb_.get());
     VBucketPtr vbucket = engine->getVBucket(vb_);
     if (vbucket) {
         // MB-29369: only run the task's work if the stream is in an in-memory
@@ -876,6 +885,10 @@ void ActiveStream::nextCheckpointItemTask(const LockHolder& streamMutex) {
 
 ActiveStream::OutstandingItemsResult ActiveStream::getOutstandingItems(
         VBucket& vb) {
+    TRACE_EVENT1("DcpProducer",
+                 "ActiveStream::getOutstandingItems",
+                 "vbid",
+                 vb.getId().get());
     OutstandingItemsResult result;
     // Commencing item processing - set guard flag.
     chkptItemsExtractionInProgress.store(true);
@@ -1058,6 +1071,10 @@ std::unique_ptr<DcpResponse> ActiveStream::makeResponseFromItem(
 
 void ActiveStream::processItems(OutstandingItemsResult& outstandingItemsResult,
                                 const LockHolder& streamMutex) {
+    TRACE_EVENT1("DcpProducer",
+                 "ActiveStream::processItems",
+                 "#items",
+                 outstandingItemsResult.items.size());
     if (!outstandingItemsResult.items.empty()) {
         // Transform the sequence of items from the CheckpointManager into
         // a sequence of DCP messages which this stream should receive. There
@@ -1777,6 +1794,10 @@ spdlog::level::level_enum ActiveStream::getTransitionStateLogLevel(
 }
 
 void ActiveStream::notifyStreamReady(bool force) {
+    TRACE_EVENT1("DcpProducer",
+                 "ActiveStream::notifyStreamReady",
+                 "vbid",
+                 vb_.get());
     bool inverse = false;
     if (force || itemsReady.compare_exchange_strong(inverse, true)) {
         auto producer = producerPtr.lock();

@@ -28,9 +28,9 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <folly/concurrency/UnboundedQueue.h>
-
-#include <gsl.h>
+#include <phosphor/phosphor.h>
 #include <utilities/logtags.h>
+#include <gsl/gsl>
 
 constexpr std::chrono::milliseconds
         ActiveDurabilityMonitor::State::defaultTimeout;
@@ -83,6 +83,10 @@ public:
      */
     void enqueue(const ActiveDurabilityMonitor::State& state,
                  ActiveSyncWrite&& sw) {
+        TRACE_EVENT1("durability",
+                     "ActiveDM::ResolvedQueue::enqueue",
+                     "sw.seqno",
+                     sw.getBySeqno());
         highEnqueuedSeqno = sw.getBySeqno();
         queue.enqueue(sw);
     }
@@ -265,6 +269,10 @@ void ActiveDurabilityMonitor::addSyncWrite(const void* cookie,
 
 ENGINE_ERROR_CODE ActiveDurabilityMonitor::seqnoAckReceived(
         const std::string& replica, int64_t preparedSeqno) {
+    TRACE_EVENT1("durability",
+                 "ActiveDM::seqnoAckReceived",
+                 "vbid",
+                 vb.getId().get());
     // By logic the correct order of processing for every verified SyncWrite
     // would be:
     // 1) check if DurabilityRequirements are satisfied
@@ -413,10 +421,18 @@ void ActiveDurabilityMonitor::checkForResolvedSyncWrites() {
     if (resolvedQueue->empty()) {
         return;
     }
+    TRACE_EVENT1("durability",
+                 "ActiveDM::checkForResolvedSyncWrites",
+                 "vbid",
+                 vb.getId().get());
     vb.notifySyncWritesPendingCompletion();
 }
 
 void ActiveDurabilityMonitor::processCompletedSyncWriteQueue() {
+    TRACE_EVENT1("durability",
+                 "ActiveDM::processCompletedSyncWriteQueue",
+                 "vbid",
+                 vb.getId().get());
     std::lock_guard<ResolvedQueue::ConsumerLock> lock(
             resolvedQueue->getConsumerLock());
     while (auto sw = resolvedQueue->try_dequeue(lock)) {
@@ -800,6 +816,7 @@ ActiveDurabilityMonitor::State::removeSyncWrite(Container::iterator it,
 }
 
 void ActiveDurabilityMonitor::commit(const ActiveSyncWrite& sw) {
+    TRACE_EVENT1("durability", "ActiveDM::commit", "vbid", vb.getId().get());
     const auto& key = sw.getKey();
 
     const auto prepareEnd = std::chrono::steady_clock::now();

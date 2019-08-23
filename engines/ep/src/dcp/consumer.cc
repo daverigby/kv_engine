@@ -778,7 +778,7 @@ ENGINE_ERROR_CODE DcpConsumer::setVBucketState(uint32_t opaque,
 }
 
 ENGINE_ERROR_CODE DcpConsumer::step(struct dcp_message_producers* producers) {
-
+    TRACE_EVENT0("DcpConsumer", "DcpConsumer::step");
     if (doDisconnect()) {
         return ENGINE_DISCONNECT;
     }
@@ -1226,6 +1226,7 @@ std::string DcpConsumer::getProcessorTaskStatusStr() {
 }
 
 std::unique_ptr<DcpResponse> DcpConsumer::getNextItem() {
+    TRACE_EVENT0("DcpConsumer", "DcpConsumer::getNextItem");
     LockHolder lh(readyMutex);
 
     unPause();
@@ -1265,6 +1266,10 @@ std::unique_ptr<DcpResponse> DcpConsumer::getNextItem() {
 }
 
 void DcpConsumer::notifyStreamReady(Vbid vbucket) {
+    TRACE_EVENT1("DcpConsumer",
+                 "DcpConsumer::notifyStreamReady",
+                 "vbid",
+                 vbucket.get());
     {
         std::lock_guard<std::mutex> lh(readyMutex);
         auto iter = std::find(ready.begin(), ready.end(), vbucket);
@@ -1592,6 +1597,7 @@ void DcpConsumer::immediatelyNotify() {
 }
 
 void DcpConsumer::scheduleNotify() {
+    TRACE_EVENT0("DcpConsumer", "DcpConsumer::scheduleNotify");
     engine_.getDcpConnMap().addConnectionToPending(shared_from_this());
 }
 
@@ -1627,6 +1633,12 @@ ENGINE_ERROR_CODE DcpConsumer::prepare(uint32_t opaque,
                                        uint8_t nru,
                                        DocumentState document_state,
                                        cb::durability::Level level) {
+    TRACE_EVENT2("DcpConsumer",
+                 "DcpConsumer::prepare",
+                 "vbid",
+                 vbucket.get(),
+                 "seqno",
+                 by_seqno);
     lastMessageTime = ep_current_time();
 
     if (by_seqno == 0) {
@@ -1704,6 +1716,12 @@ ENGINE_ERROR_CODE DcpConsumer::commit(uint32_t opaque,
                                       const DocKey& key,
                                       uint64_t prepare_seqno,
                                       uint64_t commit_seqno) {
+    TRACE_EVENT2("DcpConsumer",
+                 "DcpConsumer::commit",
+                 "vbid",
+                 vbucket.get(),
+                 "prepare_seqno",
+                 prepare_seqno);
     lastMessageTime = ep_current_time();
     const size_t msgBytes = CommitSyncWrite::commitBaseMsgBytes + key.size();
     UpdateFlowControl ufc(*this, msgBytes);
@@ -1723,6 +1741,12 @@ ENGINE_ERROR_CODE DcpConsumer::abort(uint32_t opaque,
                                      const DocKey& key,
                                      uint64_t prepareSeqno,
                                      uint64_t abortSeqno) {
+    TRACE_EVENT2("DcpConsumer",
+                 "DcpConsumer::abort",
+                 "vbid",
+                 vbucket.get(),
+                 "prepare_seqno",
+                 prepareSeqno);
     lastMessageTime = ep_current_time();
     UpdateFlowControl ufc(*this,
                           AbortSyncWrite::abortBaseMsgBytes + key.size());

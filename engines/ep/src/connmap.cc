@@ -147,11 +147,13 @@ void ConnMap::notifyPausedConnection(const std::shared_ptr<ConnHandler>& conn) {
 }
 
 void ConnMap::addConnectionToPending(const std::shared_ptr<ConnHandler>& conn) {
+    TRACE_EVENT0("ep-engine/ConnMap", "addConnectionToPending");
     if (engine.getEpStats().isShutdown) {
         return;
     }
 
     if (conn.get() && conn->isPaused() && conn->isReserved()) {
+        TRACE_EVENT0("ep-engine/ConnMap", "addConnectionToPending::push");
         pendingNotifications.push(conn);
         if (connNotifier_) {
             // Wake up the connection notifier so that

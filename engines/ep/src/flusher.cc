@@ -25,6 +25,7 @@
 
 #include <platform/timeutils.h>
 
+#include <phosphor/phosphor.h>
 #include <stdlib.h>
 #include <chrono>
 #include <sstream>
@@ -179,6 +180,7 @@ void Flusher::start() {
 void Flusher::wake(void) {
     // taskId becomes zero if the flusher were stopped
     if (taskId > 0) {
+        TRACE_EVENT0("ep-engine/task", "Flusher::wake");
         ExecutorPool::get()->wake(taskId);
     }
 }

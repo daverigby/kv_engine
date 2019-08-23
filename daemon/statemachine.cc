@@ -30,6 +30,7 @@
 
 #include <logger/logger.h>
 #include <mcbp/mcbp.h>
+#include <phosphor/phosphor.h>
 #include <platform/strerror.h>
 #include <platform/string_hex.h>
 #include <gsl/gsl>
@@ -155,6 +156,7 @@ bool StateMachine::execute() {
  *              if we should start processing events for other connections.
  */
 bool StateMachine::conn_ship_log() {
+    TRACE_EVENT0("daemon", "StateMachine::conn_ship_log");
     if (is_bucket_dying(connection)) {
         return true;
     }

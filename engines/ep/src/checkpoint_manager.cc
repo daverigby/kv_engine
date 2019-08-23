@@ -30,6 +30,7 @@
 
 #include <boost/optional/optional_io.hpp>
 #include <gsl.h>
+#include <phosphor/phosphor.h>
 
 CheckpointManager::CheckpointManager(EPStats& st,
                                      Vbid vbucket,
@@ -669,6 +670,13 @@ bool CheckpointManager::queueDirty(
         const GenerateBySeqno generateBySeqno,
         const GenerateCas generateCas,
         PreLinkDocumentContext* preLinkDocumentContext) {
+    TRACE_EVENT2("CheckpointManager",
+                 "CheckpointManager::queueDirty",
+                 "vbid",
+                 vb.getId().get(),
+                 "seqno",
+                 qi->getBySeqno());
+
     LockHolder lh(queueLock);
 
     bool canCreateNewCheckpoint = false;
@@ -818,6 +826,10 @@ CheckpointManager::ItemsForCursor CheckpointManager::getItemsForCursor(
         CheckpointCursor* cursorPtr,
         std::vector<queued_item>& items,
         size_t approxLimit) {
+    TRACE_EVENT1("CheckpointManager",
+                 "CheckpointManager::getItemsForCursor",
+                 "vbid",
+                 vbucketId.get());
     LockHolder lh(queueLock);
     if (!cursorPtr) {
         EP_LOG_WARN("getItemsForCursor(): Caller had a null cursor {}",

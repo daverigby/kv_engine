@@ -418,6 +418,12 @@ void DcpConnMap::removeVBConnections(DcpProducer& prod) {
 }
 
 void DcpConnMap::notifyVBConnections(Vbid vbid, uint64_t bySeqno) {
+    TRACE_EVENT2("durability",
+                 "DcpConnMap::notifyVBConnections",
+                 "vbid",
+                 vbid.get(),
+                 "seqno",
+                 bySeqno);
     size_t lock_num = vbid.get() % vbConnLockNum;
     std::lock_guard<std::mutex> lh(vbConnLocks[lock_num]);
 
@@ -434,6 +440,12 @@ void DcpConnMap::notifyVBConnections(Vbid vbid, uint64_t bySeqno) {
 }
 
 void DcpConnMap::seqnoAckVBPassiveStream(Vbid vbid, int64_t seqno) {
+    TRACE_EVENT2("durability",
+                 "DcpConnMap::seqnoAckVBPassiveStream",
+                 "vbid",
+                 vbid.get(),
+                 "seqno",
+                 seqno);
     std::vector<std::shared_ptr<DcpConsumer>> conns;
     { // Locking scope for vbConnsLocks[index]
         size_t index = vbid.get() % vbConnLockNum;

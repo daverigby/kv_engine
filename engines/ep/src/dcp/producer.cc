@@ -38,6 +38,7 @@
 #include "statwriter.h"
 
 #include <memcached/server_cookie_iface.h>
+#include <phosphor/phosphor.h>
 
 const std::chrono::seconds DcpProducer::defaultDcpNoopTxInterval(20);
 
@@ -999,6 +1000,13 @@ ENGINE_ERROR_CODE DcpProducer::control(uint32_t opaque,
 ENGINE_ERROR_CODE DcpProducer::seqno_acknowledged(uint32_t opaque,
                                                   Vbid vbucket,
                                                   uint64_t prepared_seqno) {
+    TRACE_EVENT2("DcpProducer",
+                 "DcpProducer::seqno_acknowledged",
+                 "vbid",
+                 vbucket.get(),
+                 "prepared_seqno",
+                 prepared_seqno);
+
     if (!isSyncReplicationEnabled()) {
         logger->warn(
                 "({}) seqno_acknowledge failed because SyncReplication is"
@@ -1369,6 +1377,12 @@ void DcpProducer::aggregateQueueStats(ConnCounter& aggregator) {
 }
 
 void DcpProducer::notifySeqnoAvailable(Vbid vbucket, uint64_t seqno) {
+    TRACE_EVENT2("DcpProducer",
+                 "DcpProducer::notifySeqnoAvailable",
+                 "vbid",
+                 vbucket.get(),
+                 "seqno",
+                 seqno);
     auto rv = streams.find(vbucket.get());
 
     if (rv != streams.end()) {
@@ -1729,6 +1743,7 @@ void DcpProducer::scheduleCheckpointProcessorTask(
 
 std::shared_ptr<StreamContainer<std::shared_ptr<Stream>>>
 DcpProducer::findStreams(Vbid vbid) {
+    TRACE_EVENT0("DcpProducer", "DcpProducer::findStreams");
     auto it = streams.find(vbid.get());
     if (it != streams.end()) {
         return it->second;

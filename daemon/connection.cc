@@ -1430,6 +1430,12 @@ void Connection::runStateMachinery() {
         } while (stateMachine.execute());
     } else {
         while (stateMachine.execute()) {
+            TRACE_EVENT2("daemon",
+                         "Connection::runStateMachinery",
+                         "ID - ",
+                         getId(),
+                         " state - ",
+                         stateMachine.getCurrentStateName());
             // empty
         }
     }
@@ -1832,6 +1838,13 @@ ENGINE_ERROR_CODE Connection::marker(
         uint32_t flags,
         boost::optional<uint64_t> high_completed_seqno,
         cb::mcbp::DcpStreamId sid) {
+    TRACE_EVENT2("daemon",
+                 "Connection::marker",
+                 "vbid",
+                 vbucket.get(),
+                 "end_seqno",
+                 end_seqno);
+
     using Framebuilder = cb::mcbp::FrameBuilder<cb::mcbp::Request>;
     using cb::mcbp::Request;
     using cb::mcbp::request::DcpSnapshotMarkerV1Payload;
@@ -2446,6 +2459,13 @@ ENGINE_ERROR_CODE Connection::prepare(uint32_t opaque,
                                       uint8_t nru,
                                       DocumentState document_state,
                                       cb::durability::Level level) {
+    TRACE_EVENT2("daemon",
+                 "Connection::prepare",
+                 "vbid",
+                 vbucket.get(),
+                 "by_seqno",
+                 by_seqno);
+
     item_info info;
     if (!bucket_get_item_info(*this, it.get(), &info)) {
         LOG_WARNING("{}: Connection::prepare: Failed to get item info",
@@ -2552,6 +2572,13 @@ ENGINE_ERROR_CODE Connection::prepare(uint32_t opaque,
 ENGINE_ERROR_CODE Connection::seqno_acknowledged(uint32_t opaque,
                                                  Vbid vbucket,
                                                  uint64_t prepared_seqno) {
+    TRACE_EVENT2("daemon",
+                 "Connection::seqno_acknowledged",
+                 "vbid",
+                 vbucket.get(),
+                 "prepared_seqno",
+                 prepared_seqno);
+
     cb::mcbp::request::DcpSeqnoAcknowledgedPayload extras(prepared_seqno);
     uint8_t buffer[sizeof(cb::mcbp::Request) + sizeof(extras)];
     cb::mcbp::RequestBuilder builder({buffer, sizeof(buffer)});
@@ -2568,6 +2595,13 @@ ENGINE_ERROR_CODE Connection::commit(uint32_t opaque,
                                      const DocKey& key_,
                                      uint64_t prepare_seqno,
                                      uint64_t commit_seqno) {
+    TRACE_EVENT2("daemon",
+                 "Connection::commit",
+                 "vbid",
+                 vbucket.get(),
+                 "prepare_seqno",
+                 prepare_seqno);
+
     cb::mcbp::request::DcpCommitPayload extras(prepare_seqno, commit_seqno);
     auto key = key_;
     if (!isCollectionsSupported()) {
@@ -2592,6 +2626,13 @@ ENGINE_ERROR_CODE Connection::abort(uint32_t opaque,
                                     const DocKey& key_,
                                     uint64_t prepared_seqno,
                                     uint64_t abort_seqno) {
+    TRACE_EVENT2("daemon",
+                 "Connection::abort",
+                 "vbid",
+                 vbucket.get(),
+                 "prepared_seqno",
+                 prepared_seqno);
+
     cb::mcbp::request::DcpAbortPayload extras(prepared_seqno, abort_seqno);
     auto key = key_;
     if (!isCollectionsSupported()) {

@@ -16,11 +16,10 @@
  */
 
 #include "durability_completion_task.h"
-
 #include "ep_engine.h"
 #include "executorpool.h"
 #include "vbucket.h"
-
+#include <phosphor/phosphor.h>
 #include <climits>
 
 using namespace std::chrono_literals;
@@ -31,6 +30,8 @@ DurabilityCompletionTask::DurabilityCompletionTask(
 }
 
 bool DurabilityCompletionTask::run() {
+    TRACE_EVENT0("ep-engine/task", "DurabilityCompletionTask::run");
+
     if (engine->getEpStats().isShutdown) {
         return false;
     }
@@ -49,6 +50,8 @@ bool DurabilityCompletionTask::run() {
     Vbid pendingVb;
     while (queue.popFront(pendingVb)) {
         auto vb = engine->getVBucket(Vbid(pendingVb));
+        TRACE_EVENT1(
+                "ep-engine/task", "DurabilityCompletionTaskVB", "vbid", pendingVb;
         if (vb) {
             vb->processResolvedSyncWrites();
         }
@@ -66,6 +69,11 @@ bool DurabilityCompletionTask::run() {
 }
 
 void DurabilityCompletionTask::notifySyncWritesToComplete(Vbid vbid) {
+    TRACE_EVENT1("ep-engine/task",
+                 "DurabilityCompletionTask::notifySyncWritesToComplete",
+                 "vbid",
+                 vbid.get());
+
     if (!queue.pushUnique(vbid)) {
         // Return if already in queue, no need to notify the task
         return;

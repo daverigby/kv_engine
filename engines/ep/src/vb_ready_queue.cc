@@ -16,6 +16,7 @@
  */
 
 #include "vb_ready_queue.h"
+#include <phosphor/phosphor.h>
 
 #include "locks.h"
 #include "statwriter.h"
@@ -45,6 +46,7 @@ void VBReadyQueue::pop() {
 }
 
 bool VBReadyQueue::pushUnique(Vbid vbucket) {
+    TRACE_EVENT1("ep-engine/VBReadyQueue", "pushUnique", "vbid", vbucket.get());
     bool wasEmpty;
     {
         LockHolder lh(lock);

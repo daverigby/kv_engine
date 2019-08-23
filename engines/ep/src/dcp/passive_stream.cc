@@ -29,6 +29,7 @@
 
 #include <gsl.h>
 
+#include <phosphor/phosphor.h>
 #include <memory>
 
 const std::string passiveStreamLoggingPrefix =
@@ -709,6 +710,8 @@ ENGINE_ERROR_CODE PassiveStream::processExpiration(
 
 ENGINE_ERROR_CODE PassiveStream::processPrepare(
         MutationConsumerMessage* prepare) {
+    TRACE_EVENT1(
+            "DcpConsumer", "PassiveStream::processPrepare", "vbid", vb_.get());
     auto result = processMessage(prepare, MessageType::Prepare);
     if (result == ENGINE_SUCCESS) {
         Expects(prepare->getItem()->getBySeqno() ==
@@ -718,6 +721,12 @@ ENGINE_ERROR_CODE PassiveStream::processPrepare(
 }
 
 void PassiveStream::seqnoAck(int64_t seqno) {
+    TRACE_EVENT2("DcpConsumer",
+                 "PassiveStream::seqnoAck",
+                 "vbid",
+                 vb_.get(),
+                 "seqno",
+                 seqno);
     // Only send a seqnoAck if we have an active stream that the producer has
     // responded with Success to the stream request
     if (!isActive() || isPending()) {
@@ -760,6 +769,8 @@ std::string PassiveStream::to_string(StreamState st) {
 }
 
 ENGINE_ERROR_CODE PassiveStream::processCommit(const CommitSyncWrite& commit) {
+    TRACE_EVENT1(
+            "DcpConsumer", "PassiveStream::processCommit", "vbid", vb_.get());
     VBucketPtr vb = engine->getVBucket(vb_);
 
     if (!vb) {
@@ -784,6 +795,8 @@ ENGINE_ERROR_CODE PassiveStream::processCommit(const CommitSyncWrite& commit) {
 }
 
 ENGINE_ERROR_CODE PassiveStream::processAbort(const AbortSyncWrite& abort) {
+    TRACE_EVENT1(
+            "DcpConsumer", "PassiveStream::processAbort", "vbid", vb_.get());
     VBucketPtr vb = engine->getVBucket(vb_);
 
     if (!vb) {
@@ -975,6 +988,12 @@ void PassiveStream::processSetVBucketState(SetVBucketState* state) {
 }
 
 void PassiveStream::handleSnapshotEnd(VBucketPtr& vb, uint64_t byseqno) {
+    TRACE_EVENT2("DcpConsumer",
+                 "PassiveStream::handleSnapshotEnd",
+                 "vbid",
+                 vb_.get(),
+                 "seqno",
+                 byseqno);
     if (byseqno == cur_snapshot_end.load()) {
         if (cur_snapshot_type.load() == Snapshot::Disk) {
             vb->setReceivingInitialDiskSnapshot(false);
@@ -1180,6 +1199,10 @@ std::string PassiveStream::getEndStreamStatusStr(end_stream_status_t status) {
 }
 
 void PassiveStream::notifyStreamReady() {
+    TRACE_EVENT1("DcpConsumer",
+                 "PassiveStream::notifyStreamReady",
+                 "vbid",
+                 getVBucket().get());
     auto consumer = consumerPtr.lock();
     if (!consumer) {
         return;

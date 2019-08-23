@@ -20,6 +20,7 @@
 #include "executorpool.h"
 #include "globaltask.h"
 
+#include <phosphor/phosphor.h>
 #include <chrono>
 
 /**
@@ -34,6 +35,7 @@ public:
     }
 
     bool run() override {
+        TRACE_EVENT0("ep-engine/task", "ConnNotifierCallback");
         auto connNotifier = connNotifierPtr.lock();
         if (connNotifier) {
             return connNotifier->notifyConnections();
@@ -78,9 +80,11 @@ void ConnNotifier::stop() {
 }
 
 void ConnNotifier::notifyMutationEvent(void) {
+    TRACE_EVENT0("ep-engine/ConnNotifier", "notifyMutationEvent");
     bool inverse = false;
     if (pendingNotification.compare_exchange_strong(inverse, true)) {
         if (task > 0) {
+            TRACE_EVENT0("ep-engine/ConnNotifier", "notifyMutationEvent::wake");
             ExecutorPool::get()->wake(task);
         }
     }

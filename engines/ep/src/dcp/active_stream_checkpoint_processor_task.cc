@@ -21,7 +21,7 @@
 #include "ep_engine.h"
 #include "executorpool.h"
 #include "statwriter.h"
-
+#include <phosphor/phosphor.h>
 #include <climits>
 
 ActiveStreamCheckpointProcessorTask::ActiveStreamCheckpointProcessorTask(
@@ -36,6 +36,8 @@ ActiveStreamCheckpointProcessorTask::ActiveStreamCheckpointProcessorTask(
 }
 
 bool ActiveStreamCheckpointProcessorTask::run() {
+    TRACE_EVENT0("ep-engine/task", "ActiveStreamCheckpointProcessorTask");
+
     if (engine->getEpStats().isShutdown) {
         return false;
     }
@@ -65,6 +67,8 @@ bool ActiveStreamCheckpointProcessorTask::run() {
     bool expected = true;
     if (notified.compare_exchange_strong(expected, false) || !queueEmpty()) {
         // wakeUp, essentially yielding and allowing other tasks a go
+        TRACE_EVENT0("ep-engine/task",
+                     "ActiveStreamCheckpointProcessorTask::rerun");
         wakeUp();
     }
 
@@ -72,6 +76,8 @@ bool ActiveStreamCheckpointProcessorTask::run() {
 }
 
 void ActiveStreamCheckpointProcessorTask::wakeup() {
+    TRACE_EVENT0("ep-engine/task",
+                 "ActiveStreamCheckpointProcessorTask::wakeup");
     ExecutorPool::get()->wake(getId());
 }
 
@@ -81,6 +87,10 @@ void ActiveStreamCheckpointProcessorTask::schedule(
         // Return if already in queue, no need to notify the task
         return;
     }
+    TRACE_EVENT1("ep-engine/task",
+                 "ActiveStreamCheckpointProcessorTask::schedule",
+                 "vbid",
+                 stream->getVBucket().get());
 
     bool expected = false;
     if (notified.compare_exchange_strong(expected, true)) {
@@ -103,6 +113,8 @@ void ActiveStreamCheckpointProcessorTask::addStats(const std::string& name,
 
 std::shared_ptr<StreamContainer<std::shared_ptr<Stream>>>
 ActiveStreamCheckpointProcessorTask::queuePop() {
+    TRACE_EVENT0("ep-engine/task",
+                 "ActiveStreamCheckpointProcessorTask::queuePop");
     Vbid vbid = Vbid(0);
     auto ready = queue.popFront(vbid);
     if (!ready) {

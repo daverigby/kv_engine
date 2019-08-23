@@ -44,6 +44,7 @@
 #include <platform/timeutils.h>
 
 #include <gsl.h>
+#include <phosphor/phosphor.h>
 
 /**
  * Callback class used by EpStore, for adding relevant keys
@@ -1626,9 +1627,12 @@ ValueFilter EPBucket::getValueFilterForCompressionMode() {
 
 void EPBucket::notifyNewSeqno(const Vbid vbid, const VBNotifyCtx& notifyCtx) {
     if (notifyCtx.notifyFlusher) {
+        TRACE_EVENT1("VBucket", "notifyNewSeqno - flusher", "vbid", vbid.get());
         notifyFlusher(vbid);
     }
     if (notifyCtx.notifyReplication) {
+        TRACE_EVENT1(
+                "VBucket", "notifyNewSeqno - replication", "vbid", vbid.get());
         notifyReplication(vbid, notifyCtx.bySeqno);
     }
 }

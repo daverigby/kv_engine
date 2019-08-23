@@ -31,7 +31,7 @@
 
 // TODO: MB-20640 The default config should be configurable from memcached.json
 static phosphor::TraceConfig lastConfig{
-        phosphor::TraceConfig(phosphor::BufferMode::ring, 20 * 1024 * 1024)};
+        phosphor::TraceConfig(phosphor::BufferMode::ring, 50 * 1024 * 1024)};
 static std::mutex configMutex;
 
 ENGINE_ERROR_CODE ioctlGetTracingStatus(Cookie& cookie,

@@ -2489,6 +2489,7 @@ void KVBucket::attemptToFreeMemory() {
 }
 
 void KVBucket::wakeUpCheckpointRemover() {
+    TRACE_EVENT0("KVBucket", "KVBucket::wakeUpCheckpointRemover");
     if (chkTask && chkTask->getState() == TASK_SNOOZED) {
         ExecutorPool::get()->wake(chkTask->getId());
     }
