@@ -2277,9 +2277,11 @@ couchstore_error_t CouchKVStore::saveDocs(Vbid vbid,
         auto cs_begin = std::chrono::steady_clock::now();
 
         errCode = couchstore_commit(db);
-        st.commitHisto.add(
+
+        auto cs_duration =
                 std::chrono::duration_cast<std::chrono::microseconds>(
-                        std::chrono::steady_clock::now() - cs_begin));
+                        std::chrono::steady_clock::now() - cs_begin);
+        st.commitHisto.add(cs_duration);
         if (errCode) {
             logger.warn(
                     "CouchKVStore::saveDocs: couchstore_commit error:{} [{}]",
@@ -2298,6 +2300,15 @@ couchstore_error_t CouchKVStore::saveDocs(Vbid vbid,
             const auto writeBytes = stats->getWriteBytes();
             uint64_t writeAmp = (writeBytes * 10) / docsLogicalBytes;
             st.flusherWriteAmplificationHisto.addValue(writeAmp);
+            logger.info(
+                    "CouchKVStore::saveDocs: {} numDocs:{} logicalBytes:{} "
+                    "physicalBytes:{} duration: {}us ratio:{}",
+                    vbid,
+                    docs.size(),
+                    docsLogicalBytes,
+                    writeBytes,
+                    cs_duration.count(),
+                    float(writeBytes) / docsLogicalBytes);
         }
 
         // retrieve storage system stats for file fragmentation computation
