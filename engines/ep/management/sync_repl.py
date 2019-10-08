@@ -5,6 +5,7 @@
 import mc_bin_client
 import memcacheConstants
 import sys
+import random
 
 if len(sys.argv) < 7:
     print("Usage: {} <host[:port]> <user> <password> <bucket> <op> <key> [value] [args]".format(sys.argv[0]), file = sys.stderr)
@@ -48,7 +49,7 @@ elif op == "bulk_setD":
         level = int(sys.argv[9])
 
     for i in range(count):
-        client.setDurable(key + "_" + str(i), 0, 0, value)
+        client.setDurable(key + "_" + str(i), 0, 0, bytearray(random.getrandbits(8) for _ in range(500)))
 elif op == "loop_setD":
     count = int(sys.argv[8])
     if len(sys.argv) > 9:
@@ -56,6 +57,28 @@ elif op == "loop_setD":
 
     for i in range(count):
         client.setDurable(key, 0, 0, value + "_" + str(i), level=level)
+elif op == "loop_bulk_setD":
+    item_count = int(sys.argv[8])
+    operations = int(sys.argv[9])
+    if len(sys.argv) > 10:
+        level = int(sys.argv[10])
+
+    # Pre-compute a "reasonable" number (1000) of random values
+    randomData = []
+    for i in range(1000):
+        randomData.append(bytearray(random.getrandbits(8) for _ in range(500)))
+
+    if (operations < item_count):
+        iterations = 1
+        step = item_count // operations
+    else:
+        iterations = operations // item_count
+        step = 1;
+
+    for i in range(iterations):
+        for j in range(0, item_count, step):
+            client.setDurable(key + "_" + str(j), 0, 0, randomData[j % 1000], level=level)
+#            client.set(key + "_" + str(j), 0, 0, randomData[j % 1000])
 elif op == "add":
     print (client.add(key, 0, 0, value))
 elif op == "addD":
