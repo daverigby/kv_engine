@@ -31,6 +31,9 @@
 #include <platform/dirutils.h>
 #include <programs/engine_testapp/mock_server.h>
 
+#include <algorithm>
+#include <random>
+
 using namespace std::string_literals;
 
 enum Storage {
@@ -140,12 +143,19 @@ protected:
     }
 
     void TearDown(const benchmark::State& state) override {
+        std::cerr << "TearDown\n";
         kvstore.reset();
         cb::io::rmrf(kvstoreConfig->getDBName());
     }
 
 private:
     std::unique_ptr<KVStore> setup_kv_store(KVStoreConfig& config) {
+        // Clean up in case a stale file was left from a previous run.
+        try {
+            cb::io::rmrf(config.getDBName());
+        } catch (const std::system_error&) {
+        }
+
         auto kvstore = KVStoreFactory::create(config);
         vbucket_state state;
         state.transition.state = vbucket_state_active;
@@ -193,6 +203,96 @@ BENCHMARK_DEFINE_F(KVStoreBench, Scan)(benchmark::State& state) {
     state.SetItemsProcessed(itemCountTotal);
 }
 
+/*
+ * Benchmark for KVStore::commit()
+ */
+BENCHMARK_DEFINE_F(KVStoreBench, Commit)(benchmark::State& state) {
+    // KVStoreBench test fixture has populated state.range(0) items initally,
+    // use state.range(2) specify how lamny items to mutate in a single commit
+    // batch.
+    const size_t batchSize = state.range(2);
+
+    // Populate the vectgor of keys, then pre-shuffle the keyspace so we write
+    // in a pseudo-random order.
+    std::vector<StoredDocKey> keys;
+    for (int i = 1; i <= numItems; i++) {
+        keys.emplace_back(makeStoredDocKey("key"));
+    }
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(keys.begin(), keys.end(), gen);
+
+    auto nextKey = keys.begin();
+
+    // Setup random generator for a random value.
+    using random_bytes_engine =
+            std::independent_bits_engine<std::default_random_engine,
+                                         CHAR_BIT,
+                                         unsigned char>;
+    random_bytes_engine randomBytes;
+    std::vector<unsigned char> value(500);
+
+    size_t flushCount = 0;
+    while (state.KeepRunning()) {
+        // Only measuring set()  + commit() time, so pre-prepare data to insert
+        // with timing paused.
+        state.PauseTiming();
+
+        Vbid vbid = Vbid(0);
+        std::vector<Item> items;
+        items.reserve(batchSize);
+        for (int i = 1; i <= batchSize; i++) {
+            // Generate random value.
+            std::generate(begin(value), end(value), std::ref(randomBytes));
+
+            items.emplace_back(*nextKey,
+                               0 /*flags*/,
+                               0 /*exptime*/,
+                               value.data(),
+                               value.size(),
+                               PROTOCOL_BINARY_RAW_BYTES,
+                               0 /*cas*/,
+                               i /*bySeqno*/,
+                               vbid);
+        }
+        // Data ready, resume timing and perform set / commit().
+        state.ResumeTiming();
+
+        auto start = std::chrono::steady_clock::now();
+
+        kvstore->begin(std::make_unique<TransactionContext>());
+        MockWriteCallback wc;
+        for (auto& item : items) {
+            kvstore->set(item, wc);
+        }
+        Collections::VB::Manifest m;
+        Collections::VB::Flush f(m);
+        kvstore->commit(f);
+
+        auto end = std::chrono::steady_clock::now();
+        if (state.iterations() % 100 == 0) {
+            auto duration =
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                            end - start);
+
+            printf("%6d duration: %5d us ",
+                   state.iterations(),
+                   duration.count());
+            for (int i = 0; i < duration.count(); i += 100) {
+                printf("#");
+            }
+            printf("\n");
+        }
+
+        flushCount += batchSize;
+
+        // Just check that the VBucket High Seqno has been updated correctly
+        // EXPECT_EQ(kvstore->getVBucketState(vbid)->highSeqno, numItems);
+    }
+
+    state.SetItemsProcessed(flushCount);
+}
+
 const int NUM_ITEMS = 100000;
 
 BENCHMARK_REGISTER_F(KVStoreBench, Scan)
@@ -201,3 +301,57 @@ BENCHMARK_REGISTER_F(KVStoreBench, Scan)
         ->Args({NUM_ITEMS, ROCKSDB})
 #endif
         ;
+
+// Arg0: Number of items to pre-populate the store with.
+// Arg1: Store to use
+// Arg2: Number of items to commit in each batch.
+// Use an iteration count such that in each case we mutate each key
+// the same number of times
+// (e.g. 100 items, batch size=1 -> 100 iterations;
+//       100 items, batch size=10 -> 10 iterations.
+
+BENCHMARK_REGISTER_F(KVStoreBench, Commit)
+        ->Args({100, COUCHSTORE, 1})
+        ->Args({100, COUCHSTORE, 2})
+
+        //        ->Args({100, COUCHSTORE, 10})
+        //        ->Args({100, COUCHSTORE, 100})
+
+        ->Args({1000, COUCHSTORE, 1})
+        ->Args({1000, COUCHSTORE, 2})
+
+        //        ->Args({1000, COUCHSTORE, 10})
+        //        ->Args({1000, COUCHSTORE, 100})
+        //        ->Args({1000, COUCHSTORE, 1000})
+
+        ->Args({10000, COUCHSTORE, 1})
+        ->Args({10000, COUCHSTORE, 2})
+
+        //        ->Args({10000, COUCHSTORE, 10})
+        //        ->Args({10000, COUCHSTORE, 100})
+        //        ->Args({10000, COUCHSTORE, 1000})
+        //        ->Args({10000, COUCHSTORE, 10000})
+
+        ->Args({100000, COUCHSTORE, 1})
+        ->Args({100000, COUCHSTORE, 2})
+//        ->Args({100000, COUCHSTORE, 10})
+//        ->Args({100000, COUCHSTORE, 100})
+//        ->Args({100000, COUCHSTORE, 1000})
+//        ->Args({100000, COUCHSTORE, 10000})
+
+#if 0
+#ifdef EP_USE_ROCKSDB
+        ->Args({NUM_ITEMS, ROCKSDB, 1})
+        ->Args({NUM_ITEMS, ROCKSDB, 10})
+        ->Args({NUM_ITEMS, ROCKSDB, 100})
+        ->Args({NUM_ITEMS, ROCKSDB, 1000})
+        ->Args({NUM_ITEMS, ROCKSDB, 10000})
+#endif
+
+#endif
+
+        ->Iterations(10000)
+
+        // Use RealTime to measure; given a lot of IO is performed and we
+        // want to measure Wall Clock time.
+        ->UseRealTime();
