@@ -199,8 +199,6 @@ protected:
 
     class ValueChangedListener;
 
-    void flushOneDeleteAll();
-
     void flushOneDelOrSet(const queued_item& qi, VBucketPtr& vb);
 
     /**

@@ -2617,7 +2617,6 @@ GetValue VBucket::getInternal(
         const void* cookie,
         EventuallyPersistentEngine& engine,
         get_options_t options,
-        bool diskFlushAll,
         GetKeyOnly getKeyOnly,
         const Collections::VB::Manifest::CachingReadHandle& cHandle,
         const ForGetReplicaOp getReplicaItem) {
@@ -2706,8 +2705,7 @@ GetValue VBucket::getInternal(
                         !v->isResident(),
                         v->getNRUValue());
     } else {
-        if (!getDeletedValue &&
-            (eviction == EvictionPolicy::Value || diskFlushAll)) {
+        if (!getDeletedValue && (eviction == EvictionPolicy::Value)) {
             return GetValue();
         }
 

@@ -457,12 +457,6 @@ public:
         return lastTransTimePerItem.load();
     }
 
-    bool isDeleteAllScheduled() override {
-        return diskDeleteAll.load();
-    }
-
-    void setDeleteAllComplete() override;
-
     void setBackfillMemoryThreshold(double threshold) override;
 
     void setExpiryPagerSleeptime(size_t val) override;
@@ -758,14 +752,6 @@ protected:
      * Used by flush operations: flushVB, deleteVB, compactVB, snapshotVB */
     std::vector<std::mutex>       vb_mutexes;
     std::deque<MutationLog>       accessLog;
-
-    std::atomic<bool> diskDeleteAll;
-    struct DeleteAllTaskCtx {
-        DeleteAllTaskCtx() : delay(true), cookie(NULL) {
-        }
-        std::atomic<bool> delay;
-        const void* cookie;
-    } deleteAllTaskCtx;
 
     std::mutex vbsetMutex;
     double backfillMemoryThreshold;
