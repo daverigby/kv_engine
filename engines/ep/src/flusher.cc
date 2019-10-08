@@ -258,6 +258,8 @@ void Flusher::completeFlush() {
 }
 
 void Flusher::flushVB(void) {
+    TRACE_EVENT0("ep-engine", "Flusher::flushVB");
+
     if (store->isDeleteAllScheduled() && shard->getId() != EP_PRIMARY_SHARD) {
         // another shard is doing disk flush
         bool inverse = false;

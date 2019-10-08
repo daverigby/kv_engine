@@ -341,6 +341,8 @@ static bool canDeDuplicate(Item* lastFlushed, Item& candidate) {
 }
 
 std::pair<bool, size_t> EPBucket::flushVBucket(Vbid vbid) {
+    TRACE_EVENT1("ep-engine", "EPBucket::flushVBucket", "vbid", vbid.get());
+
     KVShard *shard = vbMap.getShardByVbId(vbid);
     if (diskDeleteAll && !deleteAllTaskCtx.delay) {
         if (shard->getId() == EP_PRIMARY_SHARD) {
@@ -357,6 +359,10 @@ std::pair<bool, size_t> EPBucket::flushVBucket(Vbid vbid) {
 
     auto vb = getLockedVBucket(vbid, std::try_to_lock);
     if (!vb.owns_lock()) {
+        TRACE_INSTANT1("ep-engine",
+                       "EPBucket::flushVBucket VB busy",
+                       "vbid",
+                       vbid.get());
         // Try another bucket if this one is locked to avoid blocking flusher.
         return {true, 0};
     }
