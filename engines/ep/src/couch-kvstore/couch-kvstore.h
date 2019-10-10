@@ -568,9 +568,9 @@ protected:
      * @param cid The collection to update
      * @param stats The stats that should be persisted
      */
-    void saveCollectionStats(Db& db,
-                             CollectionID cid,
-                             Collections::VB::PersistedStats stats);
+    size_t saveCollectionStats(Db& db,
+                               CollectionID cid,
+                               Collections::VB::PersistedStats stats);
 
     /**
      * Delete the count for collection cid

@@ -117,6 +117,7 @@ protected:
         // Initialize KVStore
         kvstore = setup_kv_store(*kvstoreConfig);
 
+#if 0
         // Load some data
         const std::string key = "key";
         std::string value = "value";
@@ -140,12 +141,13 @@ protected:
         kvstore->commit(f);
         // Just check that the VBucket High Seqno has been updated correctly
         EXPECT_EQ(kvstore->getVBucketState(vbid)->highSeqno, numItems);
+#endif
     }
 
     void TearDown(const benchmark::State& state) override {
         std::cerr << "TearDown\n";
         kvstore.reset();
-        cb::io::rmrf(kvstoreConfig->getDBName());
+        // cb::io::rmrf(kvstoreConfig->getDBName());
     }
 
 private:
@@ -216,12 +218,15 @@ BENCHMARK_DEFINE_F(KVStoreBench, Commit)(benchmark::State& state) {
     // in a pseudo-random order.
     std::vector<StoredDocKey> keys;
     for (int i = 1; i <= numItems; i++) {
-        keys.emplace_back(makeStoredDocKey("key"));
+        keys.emplace_back(makeStoredDocKey("key_" + std::to_string(i)));
     }
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::shuffle(keys.begin(), keys.end(), gen);
+    //    std::shuffle(keys.begin(), keys.end(), gen);
 
+    for (const auto& key : keys) {
+        std::cout << key << "\n";
+    }
     auto nextKey = keys.begin();
 
     // Setup random generator for a random value.
@@ -254,6 +259,11 @@ BENCHMARK_DEFINE_F(KVStoreBench, Commit)(benchmark::State& state) {
                                0 /*cas*/,
                                i /*bySeqno*/,
                                vbid);
+
+            nextKey++;
+            if (nextKey == keys.end()) {
+                nextKey = keys.begin();
+            }
         }
         // Data ready, resume timing and perform set / commit().
         state.ResumeTiming();
@@ -263,6 +273,7 @@ BENCHMARK_DEFINE_F(KVStoreBench, Commit)(benchmark::State& state) {
         kvstore->begin(std::make_unique<TransactionContext>());
         MockWriteCallback wc;
         for (auto& item : items) {
+            std::cout << "key: " << item.getKey() << "\n";
             kvstore->set(item, wc);
         }
         Collections::VB::Manifest m;
@@ -350,7 +361,7 @@ BENCHMARK_REGISTER_F(KVStoreBench, Commit)
 
 #endif
 
-        ->Iterations(10000)
+        ->Iterations(100000)
 
         // Use RealTime to measure; given a lot of IO is performed and we
         // want to measure Wall Clock time.

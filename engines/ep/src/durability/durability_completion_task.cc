@@ -50,8 +50,11 @@ bool DurabilityCompletionTask::run() {
     Vbid pendingVb;
     while (queue.popFront(pendingVb)) {
         auto vb = engine->getVBucket(Vbid(pendingVb));
-        TRACE_EVENT1(
-                "ep-engine/task", "DurabilityCompletionTaskVB", "vbid", pendingVb;
+        TRACE_EVENT1("ep-engine/task",
+                     "DurabilityCompletionTaskVB",
+                     "vbid",
+                     pendingVb.get());
+
         if (vb) {
             vb->processResolvedSyncWrites();
         }

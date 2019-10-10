@@ -34,11 +34,11 @@ static char allow_no_stats_env[] = "ALLOW_NO_STATS_UPDATE=yeah";
  */
 int main(int argc, char** argv) {
     putenv(allow_no_stats_env);
-    cb::logger::createBlackholeLogger();
+    cb::logger::createConsoleLogger();
     mock_init_alloc_hooks();
     init_mock_server();
     BucketLogger::setLoggerAPI(get_mock_server_api()->log);
-    globalBucketLogger->set_level(spdlog::level::level_enum::critical);
+    globalBucketLogger->set_level(spdlog::level::level_enum::info);
     initialize_time_functions(get_mock_server_api()->core);
     ::benchmark::Initialize(&argc, argv);
     /*

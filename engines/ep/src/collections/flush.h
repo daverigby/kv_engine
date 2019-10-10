@@ -48,8 +48,8 @@ public:
      * Run the specified callback against the set of collections which have
      * changed their item count during the run of the flusher.
      */
-    void saveCollectionStats(
-            std::function<void(CollectionID, PersistedStats)> cb) const;
+    size_t saveCollectionStats(
+            std::function<size_t(CollectionID, PersistedStats)> cb) const;
 
     /**
      * Increment the 'disk' count for the collection associated with the key

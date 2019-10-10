@@ -21,8 +21,9 @@
 #include "ep_bucket.h"
 #include "item.h"
 
-void Collections::VB::Flush::saveCollectionStats(
-        std::function<void(CollectionID, PersistedStats)> cb) const {
+size_t Collections::VB::Flush::saveCollectionStats(
+        std::function<size_t(CollectionID, PersistedStats)> cb) const {
+    size_t collectionStatsSize = 0;
     for (const auto c : mutated) {
         PersistedStats stats;
         {
@@ -34,8 +35,9 @@ void Collections::VB::Flush::saveCollectionStats(
             }
             stats = lock.getPersistedStats();
         }
-        cb(c, stats);
+        collectionStatsSize += cb(c, stats);
     }
+    return collectionStatsSize;
 }
 
 void Collections::VB::Flush::incrementDiskCount(const DocKey& key) {

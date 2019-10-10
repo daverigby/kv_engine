@@ -2247,7 +2247,7 @@ couchstore_error_t CouchKVStore::saveDocs(Vbid vbid,
             }
         }
 
-        kvctx.collectionsFlush.saveCollectionStats(
+        auto collectionStatsSize = kvctx.collectionsFlush.saveCollectionStats(
                 std::bind(&CouchKVStore::saveCollectionStats,
                           this,
                           std::ref(*db),
@@ -2302,9 +2302,11 @@ couchstore_error_t CouchKVStore::saveDocs(Vbid vbid,
             st.flusherWriteAmplificationHisto.addValue(writeAmp);
             logger.info(
                     "CouchKVStore::saveDocs: {} numDocs:{} logicalBytes:{} "
+                    "collectionStatsBytes:{} "
                     "physicalBytes:{} duration: {}us ratio:{}",
                     vbid,
                     docs.size(),
+                    collectionStatsSize,
                     docsLogicalBytes,
                     writeBytes,
                     cs_duration.count(),
@@ -2593,9 +2595,8 @@ couchstore_error_t CouchKVStore::saveVBState(Db *db,
     return errCode;
 }
 
-void CouchKVStore::saveCollectionStats(Db& db,
-                                       CollectionID cid,
-                                       Collections::VB::PersistedStats stats) {
+size_t CouchKVStore::saveCollectionStats(
+        Db& db, CollectionID cid, Collections::VB::PersistedStats stats) {
     // Write out the stats in BE to a local doc named after the collection
     // Using set-notation cardinality - |cid| which helps keep the keys small
     std::string docName = "|" + cid.to_string() + "|";
@@ -2620,6 +2621,7 @@ void CouchKVStore::saveCollectionStats(Db& db,
                 couchstore_strerror(errCode),
                 couchkvstore_strerrno(&db, errCode));
     }
+    return encodedStats.size();
 }
 
 void CouchKVStore::deleteCollectionStats(Db& db, CollectionID cid) {
