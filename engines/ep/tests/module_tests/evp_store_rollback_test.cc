@@ -777,7 +777,7 @@ public:
     void responseNoRollback(int nitems,
                             uint64_t rollbackSeq,
                             uint64_t previousUUID) {
-        // Now push a reponse to the consumer, saying rollback to 0.
+        // Now push a response to the consumer, saying rollback to 0.
         // The consumer must ignore the 0 rollback and retry a stream-request
         // with the next failover entry.
         auto msg = getRollbackResponse(1 /*opaque*/, rollbackSeq);
@@ -791,7 +791,7 @@ public:
     }
 
     void responseRollback(uint64_t rollbackSeq) {
-        // Now push a reponse to the consumer, saying rollback to 0.
+        // Now push a response to the consumer, saying rollback to 0.
         // The consumer must ignore the 0 rollback and retry a stream-request
         // with the next failover entry.
         auto msg = getRollbackResponse(1 /*opaque*/, rollbackSeq);
