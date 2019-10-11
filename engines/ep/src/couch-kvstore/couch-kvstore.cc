@@ -2567,6 +2567,8 @@ CouchKVStore::ReadVBStateResult CouchKVStore::readVBStateAndUpdateCache(
 
 couchstore_error_t CouchKVStore::saveVBState(Db *db,
                                              const vbucket_state &vbState) {
+    TRACE_EVENT0("CouchKVStore", "saveVBState");
+
     LocalDoc lDoc;
     lDoc.id.buf = (char *)"_local/vbstate";
     lDoc.id.size = sizeof("_local/vbstate") - 1;
@@ -2597,6 +2599,8 @@ couchstore_error_t CouchKVStore::saveVBState(Db *db,
 
 size_t CouchKVStore::saveCollectionStats(
         Db& db, CollectionID cid, Collections::VB::PersistedStats stats) {
+    TRACE_EVENT0("CouchKVStore", "saveCollectionStats");
+
     // Write out the stats in BE to a local doc named after the collection
     // Using set-notation cardinality - |cid| which helps keep the keys small
     std::string docName = "|" + cid.to_string() + "|";

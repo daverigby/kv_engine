@@ -54,6 +54,8 @@ public:
                            const cb::mcbp::Request& request,
                            ENGINE_STORE_OPERATION op_);
 
+    ~MutationCommandContext();
+
     /// this function is the predicate to pass to store_if
     static cb::StoreIfStatus storeIfPredicate(
             const boost::optional<item_info>& existing, cb::vbucket_info vb);

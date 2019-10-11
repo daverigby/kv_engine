@@ -26,6 +26,7 @@
 #include <memcached/durability_spec.h>
 #include <memcached/protocol_binary.h>
 #include <memcached/types.h>
+#include <phosphor/phosphor.h>
 #include <xattr/utils.h>
 
 MutationCommandContext::MutationCommandContext(Cookie& cookie,
@@ -44,6 +45,11 @@ MutationCommandContext::MutationCommandContext(Cookie& cookie,
       store_if_predicate(cookie.getConnection().selectedBucketIsXattrEnabled()
                                  ? storeIfPredicate
                                  : nullptr) {
+    TRACE_EVENT_START1("daemon/request", "Mutation", "op", int(operation));
+}
+
+MutationCommandContext::~MutationCommandContext() {
+    TRACE_EVENT_END0("daemon/request", "Mutation");
 }
 
 ENGINE_ERROR_CODE MutationCommandContext::step() {
