@@ -18,6 +18,8 @@
 
 #include <atomic>
 
+#include <folly/lang/Bits.h>
+#include <platform/sysinfo.h>
 #include <string>
 
 enum bucket_priority_t {
@@ -37,8 +39,19 @@ enum workload_pattern_t {
  */
 class WorkLoadPolicy {
 public:
-    WorkLoadPolicy(int m, int s)
-        : maxNumWorkers(m), maxNumShards(s), workloadPattern(READ_HEAVY) { }
+    WorkLoadPolicy(int m, int numShards)
+        : maxNumWorkers(m),
+          maxNumShards(numShards),
+          workloadPattern(READ_HEAVY) {
+        if (maxNumShards == 0) {
+            // If user didn't specify a maximum shard count, then auto-select
+            // based on the number of available CPUs - set to closest power-of-2
+            // which isn't greater than #CPUs.
+            maxNumShards = folly::prevPowTwo(cb::get_available_cpu_count());
+            // Sanity - must always have at least 1 shard
+            maxNumShards = std::max(1, maxNumShards);
+        }
+    }
 
     size_t getNumShards(void) {
         return maxNumShards;
