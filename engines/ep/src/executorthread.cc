@@ -25,6 +25,7 @@
 #include "globaltask.h"
 #include "taskqueue.h"
 
+#include <folly/portability/SysResource.h>
 #include <platform/timeutils.h>
 #include <sstream>
 
@@ -75,6 +76,14 @@ void ExecutorThread::stop(bool wait) {
 
 void ExecutorThread::run() {
     EP_LOG_DEBUG("Thread {} running..", getName());
+
+    // EXPERIMENT - Does decreasing the priority of Writer threads help
+    // front-end latency?
+    if (taskType == WRITER_TASK_IDX) {
+        setpriority(
+                PRIO_PROCESS, /*Current thread*/ 0, /* Lowest priority*/ 19);
+        EP_LOG_INFO("Setting thread {} to background priority", getName());
+    }
 
     for (uint8_t tick = 1;; tick++) {
         resetCurrentTask();
