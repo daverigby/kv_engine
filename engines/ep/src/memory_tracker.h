@@ -67,7 +67,7 @@ private:
     static void statsThreadMainLoop(void* arg);
 
     static void NewHook(const void* ptr, size_t);
-    static void DeleteHook(const void* ptr);
+    static void DeleteHook(const void* ptr, size_t size);
 
     // Wheter or not we have the ability to accurately track memory allocations
     static std::atomic<bool> tracking;

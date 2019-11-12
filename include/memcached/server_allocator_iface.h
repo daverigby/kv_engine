@@ -75,7 +75,7 @@ struct ServerAllocatorIface {
      * if the hook was not registered properly or if a hooks API
      * doesn't exist for the allocator in use.
      */
-    bool (*add_delete_hook)(void (*)(const void* ptr));
+    bool (*add_delete_hook)(void (*)(const void* ptr, size_t size));
 
     /**
      * Remove a hook from the memory allocator that will be called each
@@ -83,7 +83,7 @@ struct ServerAllocatorIface {
      * registered and removed and false if the specified hook is not
      * registered or if a hooks API doesn't exist for the allocator.
      */
-    bool (*remove_delete_hook)(void (*)(const void* ptr));
+    bool (*remove_delete_hook)(void (*)(const void* ptr, size_t size));
 
     /**
      * Returns the number of extra stats for the current allocator.
@@ -99,10 +99,23 @@ struct ServerAllocatorIface {
     void (*get_allocator_stats)(allocator_stats*);
 
     /**
-     * Returns the total bytes allocated by the allocator. This value
-     * may be computed differently based on the allocator in use.
+     * Returns the total bytes allocated by the allocator for the allocated
+     * memory pointed to by 'ptr'.
+     * This value may be computed differently based on the allocator in use.
      */
-    size_t (*get_allocation_size)(const void*);
+    size_t (*get_allocation_size)(const void* ptr);
+
+    /**
+     * Returns the total bytes allocated by the allocator for a request of
+     * size 'sz'.
+     * Returns 0 if the given allocator cannot determine the total size from
+     * the requested size (i.e. one must use get_allocation_size().
+     *
+     * For allocators which support it (e.g. jemalloc) this is faster than
+     * get_allocation_size() as it doesn't require looking up a particular
+     * pointer.
+     */
+    size_t (*get_allocation_size_from_sz)(size_t sz);
 
     /**
      * Fills a buffer with special detailed allocator stats.

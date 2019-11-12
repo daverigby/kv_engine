@@ -92,7 +92,7 @@ void BenchmarkMemoryTracker::NewHook(const void* ptr, size_t) {
         ObjectRegistry::memoryAllocated(alloc);
     }
 }
-void BenchmarkMemoryTracker::DeleteHook(const void* ptr) {
+void BenchmarkMemoryTracker::DeleteHook(const void* ptr, size_t size) {
     if (ptr != NULL) {
         const auto* tracker = BenchmarkMemoryTracker::instance.load();
         void* p = const_cast<void*>(ptr);

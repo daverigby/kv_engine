@@ -79,18 +79,37 @@ void MemoryTracker::destroyInstance() {
     }
 }
 
-void MemoryTracker::NewHook(const void* ptr, size_t) {
+void MemoryTracker::NewHook(const void* ptr, size_t size) {
+    const auto* tracker = MemoryTracker::instance.load();
+    // Try first using size as that is faster than looking up details of a
+    // specific pointer.
+    if (size) {
+        size_t alloc = tracker->hooks_api.get_allocation_size_from_sz(size);
+        if (alloc) {
+            ObjectRegistry::memoryAllocated(alloc);
+            return;
+        }
+    }
+    // If couldn't look up using size, fall back to using ptr.
     if (ptr != NULL) {
-        const auto* tracker = MemoryTracker::instance.load();
         void* p = const_cast<void*>(ptr);
         size_t alloc = tracker->hooks_api.get_allocation_size(p);
         ObjectRegistry::memoryAllocated(alloc);
     }
 }
 
-void MemoryTracker::DeleteHook(const void* ptr) {
+void MemoryTracker::DeleteHook(const void* ptr, size_t size) {
+    const auto* tracker = MemoryTracker::instance.load();
+    // Try first using size as that is faster than looking up details of a
+    // specific pointer.
+    if (size) {
+        size_t alloc = tracker->hooks_api.get_allocation_size_from_sz(size);
+        if (alloc) {
+            ObjectRegistry::memoryDeallocated(alloc);
+            return;
+        }
+    }
     if (ptr != NULL) {
-        const auto* tracker = MemoryTracker::instance.load();
         void* p = const_cast<void*>(ptr);
         size_t alloc = tracker->hooks_api.get_allocation_size(p);
         ObjectRegistry::memoryDeallocated(alloc);

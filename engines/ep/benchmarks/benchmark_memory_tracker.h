@@ -48,7 +48,7 @@ private:
     BenchmarkMemoryTracker(const ServerAllocatorIface& hooks_api);
     void connectHooks();
     static void NewHook(const void* ptr, size_t);
-    static void DeleteHook(const void* ptr);
+    static void DeleteHook(const void* ptr, size_t size);
 
     static std::atomic<BenchmarkMemoryTracker*> instance;
     static std::mutex instanceMutex;

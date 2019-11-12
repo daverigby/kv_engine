@@ -32,11 +32,12 @@ extern "C" {
         return false;
     }
 
-    static bool mock_add_delete_hook(void (*)(const void* ptr)) {
+    static bool mock_add_delete_hook(void (*)(const void* ptr, size_t size)) {
         return false;
     }
 
-    static bool mock_remove_delete_hook(void (*)(const void* ptr)) {
+    static bool mock_remove_delete_hook(void (*)(const void* ptr,
+                                                 size_t size)) {
         return false;
     }
 

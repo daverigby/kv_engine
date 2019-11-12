@@ -44,7 +44,7 @@ public:
     }
 
     // callback function for when memory is deleted.
-    static void DeleteHook(const void* ptr) {
+    static void DeleteHook(const void* ptr, size_t size) {
         if (ptr != NULL) {
             void* p = const_cast<void*>(ptr);
             alloc_size -= AllocHooks::get_allocation_size(p);

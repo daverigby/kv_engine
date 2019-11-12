@@ -110,11 +110,13 @@ bool JemallocHooks::remove_new_hook(void (* hook)(const void* ptr, size_t size))
     return cb_remove_new_hook(hook);
 }
 
-bool JemallocHooks::add_delete_hook(void (* hook)(const void* ptr)) {
+bool JemallocHooks::add_delete_hook(void (*hook)(const void* ptr,
+                                                 size_t size)) {
     return cb_add_delete_hook(hook);
 }
 
-bool JemallocHooks::remove_delete_hook(void (* hook)(const void* ptr)) {
+bool JemallocHooks::remove_delete_hook(void (*hook)(const void* ptr,
+                                                    size_t size)) {
     return cb_remove_delete_hook(hook);
 }
 
@@ -147,6 +149,10 @@ size_t JemallocHooks::get_allocation_size(const void* ptr) {
      * const pointer
      */
     return je_malloc_usable_size((void*) ptr);
+}
+
+size_t JemallocHooks::get_allocation_size_from_sz(size_t size) {
+    return je_nallocx(size, 0);
 }
 
 void JemallocHooks::get_detailed_stats(char* buffer, int size) {
