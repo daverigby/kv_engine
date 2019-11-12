@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <folly/FBString.h>
 #include <memcached/dockey.h>
 #include <gsl/gsl>
 #include <limits>
@@ -30,13 +31,17 @@ class SerialisedDocKey;
 /**
  * StoredDocKey is a container for key data
  *
- * Internally an n byte key is stored in a n + sizeof(CollectionID) std::string.
+ * Internally an n byte key is stored in a n + sizeof(CollectionID) fbstring.
  *  a) We zero terminate so that data() is safe for printing as a c-string.
  *  b) The CollectionID is stored before the key string (using LEB128 encoding).
  *    This is because StoredDocKey typically ends up being written to disk and
  *    the CollectionID forms part of the on-disk key. Accounting and for for the
  *    CollectionID means storage components don't have to create a new buffer
  *    into which they can layout CollectionID and key data.
+ *  c) fbstring is used because it has a greater Small-String-Optimization
+ *    capacity compared to libstdc++ (23 bytes vs 16 bytes). Given keys are
+ *    typically small, the extra 7 bytes of capacity where we can avoid heap
+ *    allocation can be significant for many workloads.
  */
 class StoredDocKey : public DocKeyInterface<StoredDocKey> {
 public:
@@ -110,11 +115,12 @@ public:
     }
 
     operator DocKey() const {
-        return {keydata, DocKeyEncodesCollectionId::Yes};
+        return {cb::const_char_buffer{keydata.data(), keydata.size()},
+                DocKeyEncodesCollectionId::Yes};
     }
 
 protected:
-    std::string keydata;
+    folly::fbstring keydata;
 };
 
 std::ostream& operator<<(std::ostream& os, const StoredDocKey& key);

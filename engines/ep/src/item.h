@@ -583,10 +583,8 @@ std::ostream& operator<<(std::ostream& os, const Item& item);
 // bit-fields to reduce the size?
 // If you've reduced Item size, thanks! Please update the assert with the new
 // size.
-// Note the assert is written as we see std::string (member of the StoredDocKey)
-// differing. This totals 104 or 112 (string being 24 or 32).
 #ifndef CB_MEMORY_INEFFICIENT_TAGGED_PTR
-static_assert(sizeof(Item) == sizeof(std::string) + 80,
+static_assert(sizeof(Item) == 104,
               "sizeof Item may have an effect on run-time memory consumption, "
               "please avoid increasing it");
 #endif

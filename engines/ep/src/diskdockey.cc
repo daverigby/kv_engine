@@ -49,7 +49,7 @@ DiskDocKey::DiskDocKey(const char* ptr, size_t len) : keydata(ptr, len) {
 }
 
 std::size_t DiskDocKey::hash() const {
-    return std::hash<std::string>()(keydata);
+    return std::hash<folly::fbstring>()(keydata);
 }
 
 DocKey DiskDocKey::getDocKey() const {

@@ -16,8 +16,8 @@
  */
 #pragma once
 
+#include <folly/FBString.h>
 #include <memcached/dockey.h>
-#include <string>
 
 struct DocKey;
 class Item;
@@ -107,7 +107,7 @@ public:
     std::string to_string() const;
 
 protected:
-    std::string keydata;
+    folly::fbstring keydata;
 };
 
 /// A hash function for DiskDocKey so they can be used in std::map and friends.
