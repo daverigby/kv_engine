@@ -308,11 +308,6 @@ void HashTable::resize(size_t newSize) {
 }
 
 HashTable::FindInnerResult HashTable::findInner(const DocKey& key) {
-    if (!isActive()) {
-        throw std::logic_error(
-                "HashTable::find: Cannot call on a "
-                "non-active object");
-    }
     HashBucketLock hbl = getLockedBucket(key);
     // Scan through all elements in the hash bucket chain looking for Committed
     // and Pending items with the same key.
@@ -327,6 +322,7 @@ HashTable::FindInnerResult HashTable::findInner(const DocKey& key) {
             } else {
                 Expects(!foundCmt);
                 foundCmt = v;
+                break;
             }
         }
     }
