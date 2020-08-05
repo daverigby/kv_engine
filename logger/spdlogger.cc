@@ -37,7 +37,7 @@ static const std::string logger_name{"spdlog_file_logger"};
  * TODO: Remove the duplication in the future, by (maybe) moving
  *       the const to a header file.
  */
-static const std::string log_pattern{"%^%Y-%m-%dT%T.%f%z %l %v%$"};
+static const std::string log_pattern{"%^%Y-%m-%dT%T.%f%z T:%t %l %v%$"};
 
 /**
  * Instances of spdlog (async) file logger.
