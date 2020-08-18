@@ -144,6 +144,10 @@ BENCHMARK_DEFINE_F(CB3ExecutorPoolBench, OneShotScheduleRun)
         cv.reset();
     }
     state.SetItemsProcessed(consumerCount);
+
+    if (state.thread_index == 0) {
+        shutdownPool();
+    }
 }
 
 /**
@@ -315,6 +319,10 @@ BENCHMARK_DEFINE_F(PureFollyExecutorBench, OneShotScheduleRun)
         cv.reset();
     }
     state.SetItemsProcessed(consumerCount);
+
+    if (state.thread_index == 0) {
+        shutdownPool();
+    }
 }
 
 /**
