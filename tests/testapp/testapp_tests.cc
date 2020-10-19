@@ -534,7 +534,7 @@ TEST_P(McdTestappTest, MB_10114) {
     // Disable ewouldblock_engine - not wanted / needed for this MB regression test.
     ewouldblock_engine_disable();
 
-    char value[100000] = {0};
+    char value[1000000] = {0};
     const char* key = "mb-10114";
     auto command = mcbp_storage_command(
             ClientOpcode::Append, key, {value, sizeof(value)}, 0, 0);
