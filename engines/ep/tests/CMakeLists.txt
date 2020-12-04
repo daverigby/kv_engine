@@ -152,6 +152,7 @@ if (NUMA_FOUND)
 endif()
 
 add_sanitizers(ep-engine_ep_unit_tests)
+target_precompile_headers(ep-engine_ep_unit_tests REUSE_FROM memcached)
 
 ADD_EXECUTABLE(ep-engine_couch-fs-stats_test
         ${EventuallyPersistentEngine_SOURCE_DIR}/src/couch-kvstore/couch-fs-stats.cc

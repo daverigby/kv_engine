@@ -251,6 +251,13 @@ SET(COLLECTIONS_SOURCE src/collections/collections_types.cc
                        src/collections/vbucket_manifest_entry.cc
                        src/collections/vbucket_manifest_handles.cc)
 
+# Skip precompiled headers for the (tiny minority) of C source files.
+# This is to avoid adding complexity to ep_precompiled_headers.h to
+# handle C & C++ includes differently.
+set_source_files_properties(src/crc32.c
+                            ${CMAKE_CURRENT_BINARY_DIR}/src/stats-info.c
+                            PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+
 ADD_LIBRARY(ep_objs OBJECT
             src/access_scanner.cc
             src/bgfetcher.cc
@@ -378,6 +385,7 @@ ADD_LIBRARY(ep_objs OBJECT
             ${COLLECTIONS_SOURCE})
 SET_PROPERTY(TARGET ep_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_sanitizers(ep_objs)
+target_precompile_headers(ep_objs REUSE_FROM mcd_util)
 
 ADD_LIBRARY(ep SHARED $<TARGET_OBJECTS:ep_objs>)
 
@@ -414,6 +422,7 @@ if (NOT EP_BYPASS_TESTS)
             ${CMAKE_CURRENT_BINARY_DIR}/src/generated_configuration.h)
     set_property(TARGET ep_mocks PROPERTY POSITION_INDEPENDENT_CODE 1)
     add_sanitizers(ep_mocks)
+    target_precompile_headers(ep_mocks REUSE_FROM mcd_util)
 
     # While ep_perfsuite is arguably a "test" and hence should live under
     # tests/, we *don't* want optimizations disabled for it hence keep in

@@ -19,3 +19,4 @@ TARGET_LINK_LIBRARIES(mc_client_connection
     ${OPENSSL_LIBRARIES}
   PRIVATE
     cbcompress)
+TARGET_PRECOMPILE_HEADERS(mc_client_connection REUSE_FROM auditd)

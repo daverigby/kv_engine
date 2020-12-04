@@ -14,6 +14,7 @@ add_executable(cluster_test
 target_link_libraries(cluster_test cluster_framework)
 add_dependencies(cluster_test memcached ep default_engine)
 add_sanitizers(cluster_test)
+target_precompile_headers(cluster_test REUSE_FROM memcached)
 
 add_test(NAME cluster_test
          WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}

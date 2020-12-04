@@ -233,10 +233,13 @@ TARGET_LINK_LIBRARIES(memcached_daemon
                       ${COUCHBASE_NETWORK_LIBS}
                       ${MEMCACHED_EXTRA_LIBS})
 add_sanitizers(memcached_daemon)
+target_precompile_headers(memcached_daemon REUSE_FROM auditd)
 
 ADD_EXECUTABLE(memcached main.cc)
 TARGET_LINK_LIBRARIES(memcached memcached_daemon)
 add_sanitizers(memcached)
+target_precompile_headers(memcached PRIVATE
+        ${Memcached_SOURCE_DIR}/precompiled_headers.h)
 
 INSTALL(TARGETS memcached
         RUNTIME DESTINATION bin)
@@ -260,6 +263,7 @@ if (COUCHBASE_KV_BUILD_UNIT_TESTS)
              WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
              COMMAND client_cert_config_test)
     add_sanitizers(client_cert_config_test)
+    target_precompile_headers(client_cert_config_test REUSE_FROM memcached)
 
     add_executable(memcached_unit_tests
                    connection_unit_tests.cc
@@ -277,4 +281,5 @@ if (COUCHBASE_KV_BUILD_UNIT_TESTS)
     add_test(NAME memcached_unit_tests
              WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
              COMMAND memcached_unit_tests)
+    target_precompile_headers(memcached_unit_tests REUSE_FROM memcached)
 endif (COUCHBASE_KV_BUILD_UNIT_TESTS)
