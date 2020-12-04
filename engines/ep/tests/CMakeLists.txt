@@ -2,11 +2,11 @@ include(CouchbaseGoogleTest)
 
 add_compile_options_disable_optimization()
 
-ADD_LIBRARY(mock_dcp OBJECT mock/mock_dcp.cc)
+add_object_library_with_pch(mock_dcp mock/mock_dcp.cc)
 SET_PROPERTY(TARGET mock_dcp PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_sanitizers(mock_dcp)
 
-ADD_LIBRARY(ep_testsuite_objs OBJECT
+add_object_library_with_pch(ep_testsuite_objs
         ep_request_utils.cc
         ep_testsuite_common.cc
         ep_test_apis.cc
@@ -152,7 +152,6 @@ if (NUMA_FOUND)
 endif()
 
 add_sanitizers(ep-engine_ep_unit_tests)
-target_precompile_headers(ep-engine_ep_unit_tests REUSE_FROM memcached)
 
 add_executable_with_pch(ep-engine_couch-fs-stats_test
         ${EventuallyPersistentEngine_SOURCE_DIR}/src/couch-kvstore/couch-fs-stats.cc

@@ -20,7 +20,6 @@ add_executable_with_pch(memcached_mcbp_test
                ${PROJECT_SOURCE_DIR}/protocol/connection/client_mcbp_commands.cc)
 target_link_libraries(memcached_mcbp_test memcached_daemon platform gtest)
 add_sanitizers(memcached_mcbp_test)
-target_precompile_headers(memcached_mcbp_test REUSE_FROM memcached)
 
 add_test(NAME memcached_mcbp_test COMMAND memcached_mcbp_test)
 

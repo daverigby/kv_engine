@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gsl/gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
 // Used by most unit test files.

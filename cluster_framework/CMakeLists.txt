@@ -15,4 +15,3 @@ target_link_libraries(cluster_framework PUBLIC
                       platform
                       gtest
                       ${FOLLY_LIBRARIES})
-target_precompile_headers(cluster_framework REUSE_FROM auditd)
