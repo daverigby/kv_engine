@@ -1,4 +1,4 @@
-add_executable(mctrace mctrace.cc $<TARGET_OBJECTS:mc_program_utils>)
+add_executable_with_pch(mctrace mctrace.cc $<TARGET_OBJECTS:mc_program_utils>)
 target_link_libraries(mctrace
                       mc_client_connection
                       mcd_util

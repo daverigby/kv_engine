@@ -1,4 +1,4 @@
-add_executable(cluster_test
+add_executable_with_pch(cluster_test
                clustertest.cc
                clustertest.h
                collection_tests.cc

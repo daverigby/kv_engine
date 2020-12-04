@@ -14,7 +14,7 @@ else()
 endif ()
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(cbcrypto_test
+    add_executable_with_pch(cbcrypto_test
                    cbcrypto_test.cc
                    ${Memcached_SOURCE_DIR}/include/cbcrypto/cbcrypto.h)
 

@@ -1,2 +1,2 @@
-add_executable(dcpdrain dcpdrain.cc)
+add_executable_with_pch(dcpdrain dcpdrain.cc)
 target_link_libraries(dcpdrain mc_program_utils mc_client_connection mcbp)

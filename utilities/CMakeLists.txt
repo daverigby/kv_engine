@@ -57,7 +57,7 @@ set_property(TARGET mcd_test_util PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_sanitizers(mcd_test_util)
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(utilities_testapp util_test.cc)
+    add_executable_with_pch(utilities_testapp util_test.cc)
     target_link_libraries(utilities_testapp
                           mcd_util
                           platform

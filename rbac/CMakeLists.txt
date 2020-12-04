@@ -9,7 +9,7 @@ target_include_directories(memcached_rbac SYSTEM PRIVATE ${FOLLY_INCLUDE_DIR})
 target_link_libraries(memcached_rbac cbsasl platform ${FOLLY_LIBRARIES})
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(memcached_rbac_test
+    add_executable_with_pch(memcached_rbac_test
                    privilege_test.cc
                    privilege_database_test.cc)
     target_link_libraries(memcached_rbac_test memcached_rbac

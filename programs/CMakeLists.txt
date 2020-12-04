@@ -4,7 +4,7 @@ add_library(mc_program_utils OBJECT
 target_link_libraries(mc_program_utils ${COUCHBASE_NETWORK_LIBS})
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(memcached-hostutils-test
+    add_executable_with_pch(memcached-hostutils-test
                    hostname_utils_test.cc
                    $<TARGET_OBJECTS:mc_program_utils>)
     target_link_libraries(memcached-hostutils-test

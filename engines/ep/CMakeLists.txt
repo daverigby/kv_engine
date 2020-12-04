@@ -88,8 +88,8 @@ IF (WIN32)
    INCLUDE_DIRECTORIES(AFTER ${CMAKE_SOURCE_DIR}/platform/include/win32)
 ENDIF (WIN32)
 
-add_executable(gencode tools/gencode.cc)
-add_executable(genconfig tools/genconfig.cc)
+add_executable_with_pch(gencode tools/gencode.cc)
+add_executable_with_pch(genconfig tools/genconfig.cc)
 if (WIN32)
     # windows need getopt
     target_link_libraries(gencode platform)
@@ -100,7 +100,7 @@ add_sanitizers(genconfig)
 add_subdirectory(tools/couchfile_upgrade)
 include_directories(tools/couchfile_upgrade)
 
-add_executable(kvstore_gen tools/kvstore_gen.cc
+add_executable_with_pch(kvstore_gen tools/kvstore_gen.cc
         ${Memcached_SOURCE_DIR}/programs/engine_testapp/mock_cookie.cc
         ${Memcached_SOURCE_DIR}/programs/engine_testapp/mock_server.cc
         ${Memcached_SOURCE_DIR}/daemon/doc_pre_expiry.cc

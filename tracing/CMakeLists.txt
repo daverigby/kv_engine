@@ -4,7 +4,7 @@ target_link_libraries(mcd_tracing engine_utilities platform)
 add_sanitizers(mcd_tracing)
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(tracing_test tracing_test.cc)
+    add_executable_with_pch(tracing_test tracing_test.cc)
     target_link_libraries(tracing_test
                           mcd_tracing memcached_daemon gtest gtest_main)
     add_sanitizers(tracing_test)

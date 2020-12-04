@@ -20,7 +20,7 @@ install(TARGETS memcached_logger
         ARCHIVE DESTINATION lib)
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(memcached_logger_test
+    add_executable_with_pch(memcached_logger_test
                    logger_test.cc
                    logger_test_fixture.cc)
     target_link_libraries(memcached_logger_test gtest gtest_main mcd_util memcached_logger dirutils)
@@ -30,7 +30,7 @@ if (COUCHBASE_KV_BUILD_UNIT_TESTS)
              WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
              COMMAND memcached_logger_test)
 
-    add_executable(memcached_logger_benchmark logger_benchmark.cc)
+    add_executable_with_pch(memcached_logger_benchmark logger_benchmark.cc)
     target_include_directories(memcached_logger_benchmark
                                SYSTEM PRIVATE
                                ${benchmark_SOURCE_DIR}/include)

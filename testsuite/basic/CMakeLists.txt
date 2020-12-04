@@ -1,4 +1,4 @@
-add_executable(memcached-basic-engine-tests
+add_executable_with_pch(memcached-basic-engine-tests
                basic_engine_testsuite.cc
                engine_testsuite.cc)
 add_sanitizers(memcached-basic-engine-tests)

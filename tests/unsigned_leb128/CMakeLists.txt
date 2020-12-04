@@ -1,6 +1,6 @@
-add_executable(memcached_unsigned_leb128_test
+add_executable_with_pch(memcached_unsigned_leb128_test
                unsigned_leb128_test.cc)
-add_executable(memcached_unsigned_leb128_bench
+add_executable_with_pch(memcached_unsigned_leb128_bench
                unsigned_leb128_bench.cc)
 target_link_libraries(memcached_unsigned_leb128_test gtest gtest_main)
 target_link_libraries(memcached_unsigned_leb128_bench benchmark gtest gtest_main)

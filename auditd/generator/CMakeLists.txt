@@ -8,7 +8,7 @@ add_library(audit_generator_utilities OBJECT
             generator_utilities.cc
             generator_utilities.h)
 
-add_executable(auditevent_generator
+add_executable_with_pch(auditevent_generator
                auditevent_generator.cc
                auditevent_generator.h
                $<TARGET_OBJECTS:audit_generator_utilities>)
@@ -52,7 +52,7 @@ install(FILES
         DESTINATION etc/security)
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(audit_generator_unit_test
+    add_executable_with_pch(audit_generator_unit_test
                    generator_event_test.cc
                    generator_module_test.cc
                    $<TARGET_OBJECTS:audit_generator_utilities>)

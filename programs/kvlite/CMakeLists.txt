@@ -1,2 +1,2 @@
-add_executable(kvlite kvlite.cc)
+add_executable_with_pch(kvlite kvlite.cc)
 target_link_libraries(kvlite cluster_framework)

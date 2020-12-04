@@ -248,7 +248,7 @@ INSTALL(TARGETS memcached
 # Unit tests
 #
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(client_cert_config_test
+    add_executable_with_pch(client_cert_config_test
                    client_cert_config_test.cc
                    client_cert_config.cc
                    client_cert_config.h)
@@ -265,7 +265,7 @@ if (COUCHBASE_KV_BUILD_UNIT_TESTS)
     add_sanitizers(client_cert_config_test)
     target_precompile_headers(client_cert_config_test REUSE_FROM memcached)
 
-    add_executable(memcached_unit_tests
+    add_executable_with_pch(memcached_unit_tests
                    connection_unit_tests.cc
                    datatype_filter_test.cc
                    doc_pre_expiry_test.cc

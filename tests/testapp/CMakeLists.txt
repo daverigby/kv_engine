@@ -8,7 +8,7 @@ TARGET_LINK_LIBRARIES(generate_test_cbsaslpw cbsasl platform
 add_sanitizers(generate_test_cbsaslpw)
 
 add_library(testapp_auth_provider OBJECT auth_provider.h auth_provider.cc)
-add_executable(testapp_auth_provider_test auth_provider_test.cc
+add_executable_with_pch(testapp_auth_provider_test auth_provider_test.cc
                $<TARGET_OBJECTS:testapp_auth_provider>)
 target_link_libraries(testapp_auth_provider_test mcbp cbsasl platform gtest gtest_main)
 add_test(NAME testapp_auth_provider_test
@@ -78,7 +78,7 @@ set(memcached_testapp_SOURCES
     testapp_xattr.h
     ${Memcached_SOURCE_DIR}/logger/logger_test_fixture.cc)
 
-add_executable(memcached_testapp ${memcached_testapp_SOURCES})
+add_executable_with_pch(memcached_testapp ${memcached_testapp_SOURCES})
 target_compile_options(memcached_testapp PRIVATE ${CB_CXX_FLAGS_NO_OPTIMIZE})
 target_include_directories(memcached_testapp PRIVATE ${Memcached_BINARY_DIR})
 

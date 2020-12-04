@@ -28,13 +28,13 @@ add_library(mcbp STATIC
 target_link_libraries(mcbp mcd_util dirutils)
 set_property(TARGET mcbp PROPERTY POSITION_INDEPENDENT_CODE 1)
 
-add_executable(mcbp_packet_printer mcbp_packet_printer.cc)
+add_executable_with_pch(mcbp_packet_printer mcbp_packet_printer.cc)
 target_link_libraries(mcbp_packet_printer mcbp dirutils)
 add_sanitizers(mcbp_packet_printer)
 install(TARGETS mcbp_packet_printer RUNTIME DESTINATION bin)
 
 if (COUCHBASE_KV_BUILD_UNIT_TESTS)
-    add_executable(mcbp_unit_tests
+    add_executable_with_pch(mcbp_unit_tests
                    feature_test.cc
                    framebuilder_test.cc
                    magic_test.cc
