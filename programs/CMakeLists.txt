@@ -1,4 +1,4 @@
-add_library(mc_program_utils OBJECT
+add_object_library_with_pch(mc_program_utils
             getpass.cc getpass.h
             hostname_utils.cc hostname_utils.h)
 target_link_libraries(mc_program_utils ${COUCHBASE_NETWORK_LIBS})

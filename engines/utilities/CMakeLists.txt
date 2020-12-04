@@ -1,4 +1,4 @@
-ADD_LIBRARY(engine_utilities SHARED engine_error.cc)
+add_shared_library_with_pch(engine_utilities engine_error.cc)
 TARGET_LINK_LIBRARIES(engine_utilities platform)
 
 GENERATE_EXPORT_HEADER(engine_utilities

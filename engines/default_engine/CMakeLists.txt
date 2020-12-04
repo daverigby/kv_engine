@@ -1,4 +1,4 @@
-ADD_LIBRARY(default_engine SHARED
+add_shared_library_with_pch(default_engine
             assoc.cc
             assoc.h
             default_engine.cc

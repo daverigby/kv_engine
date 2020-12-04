@@ -1,4 +1,4 @@
-add_library(memcached_logger SHARED
+add_shared_library_with_pch(memcached_logger
             logger.h
             logger_config.cc
             logger_config.h

@@ -18,7 +18,7 @@ target_link_libraries(mock_server INTERFACE
                       xattr
                       ${MALLOC_LIBRARIES})
 
-add_library(engine_testapp OBJECT engine_testapp.cc
+add_object_library_with_pch(engine_testapp engine_testapp.cc
         ${Memcached_SOURCE_DIR}/daemon/bucket_type.cc
         ${Memcached_SOURCE_DIR}/daemon/bucket_type.h
         ${Memcached_SOURCE_DIR}/daemon/doc_pre_expiry.cc

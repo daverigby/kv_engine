@@ -214,7 +214,7 @@ add_custom_target(generated_source_files
             generate_audit_descriptors)
 
 # Collections library for things required outside of ep-engine
-ADD_LIBRARY(ep-engine_collections STATIC
+add_static_library_with_pch(ep-engine_collections
   ${CMAKE_CURRENT_BINARY_DIR}/src/collections/kvstore_flatbuffers_schema.cc
   src/collections/collection_persisted_stats.cc)
 
@@ -387,7 +387,7 @@ SET_PROPERTY(TARGET ep_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_sanitizers(ep_objs)
 target_precompile_headers(ep_objs REUSE_FROM mcd_util)
 
-ADD_LIBRARY(ep SHARED $<TARGET_OBJECTS:ep_objs>)
+add_shared_library_with_pch(ep $<TARGET_OBJECTS:ep_objs>)
 
 if (NOT WIN32)
   # Enable the more efficient ThreadLocalStorage model
@@ -407,7 +407,7 @@ add_sanitizers(ep)
 if (NOT EP_BYPASS_TESTS)
     add_subdirectory(tests)
 
-    add_library(ep_mocks OBJECT
+    add_object_library_with_pch(ep_mocks
             tests/mock/mock_dcp_conn_map.cc
             tests/mock/mock_dcp_consumer.cc
             tests/mock/mock_dcp_producer.cc

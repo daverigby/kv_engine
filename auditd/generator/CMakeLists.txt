@@ -1,6 +1,6 @@
 # Most of the source is used both in the unit test and the actual program
 # Build a static archive of the source to avoid compiling it twice
-add_library(audit_generator_utilities OBJECT
+add_object_library_with_pch(audit_generator_utilities
             generator_event.cc
             generator_event.h
             generator_module.cc

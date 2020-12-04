@@ -1,4 +1,4 @@
-add_library(couchfile_upgrade_objects OBJECT couchfile.cc
+add_object_library_with_pch(couchfile_upgrade_objects couchfile.cc
                                   couchstore_helpers.cc
                                   input_couchfile.cc
                                   output_couchfile.cc)
