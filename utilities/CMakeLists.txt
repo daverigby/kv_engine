@@ -50,7 +50,6 @@ endif()
 target_link_libraries(mcd_util memcached_logger engine_utilities
                       hdr_histogram_static platform ${BREAKPAD_LIBRARIES} ${OPENSSL_LIBRARIES})
 add_sanitizers(mcd_util)
-target_precompile_headers(mcd_util PRIVATE ${Memcached_SOURCE_DIR}/precompiled_headers.h)
 
 add_static_library_with_pch(mcd_test_util test_manifest.h test_manifest.cc)
 set_property(TARGET mcd_test_util PROPERTY POSITION_INDEPENDENT_CODE 1)

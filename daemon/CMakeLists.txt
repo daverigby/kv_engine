@@ -233,7 +233,6 @@ TARGET_LINK_LIBRARIES(memcached_daemon
                       ${COUCHBASE_NETWORK_LIBS}
                       ${MEMCACHED_EXTRA_LIBS})
 add_sanitizers(memcached_daemon)
-target_precompile_headers(memcached_daemon REUSE_FROM auditd)
 
 add_executable_with_pch(memcached main.cc)
 TARGET_LINK_LIBRARIES(memcached memcached_daemon)
