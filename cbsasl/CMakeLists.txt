@@ -1,4 +1,4 @@
-add_library(cbsasl STATIC
+add_static_library_with_pch(cbsasl
      ${Memcached_SOURCE_DIR}/include/cbsasl/client.h
      ${Memcached_SOURCE_DIR}/include/cbsasl/context.h
      ${Memcached_SOURCE_DIR}/include/cbsasl/domain.h

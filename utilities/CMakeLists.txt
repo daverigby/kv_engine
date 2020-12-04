@@ -13,7 +13,7 @@ endif ()
 # generate.
 INCLUDE_DIRECTORIES(BEFORE SYSTEM ${hdr_histogram_SOURCE_DIR}/src)
 
-add_library(mcd_util STATIC
+add_static_library_with_pch(mcd_util
             ${PROJECT_SOURCE_DIR}/include/memcached/config_parser.h
             ${PROJECT_SOURCE_DIR}/include/memcached/vbucket.h
             ${PROJECT_SOURCE_DIR}/include/memcached/util.h
@@ -52,7 +52,7 @@ target_link_libraries(mcd_util memcached_logger engine_utilities
 add_sanitizers(mcd_util)
 target_precompile_headers(mcd_util PRIVATE ${Memcached_SOURCE_DIR}/precompiled_headers.h)
 
-add_library(mcd_test_util STATIC test_manifest.h test_manifest.cc)
+add_static_library_with_pch(mcd_test_util test_manifest.h test_manifest.cc)
 set_property(TARGET mcd_test_util PROPERTY POSITION_INDEPENDENT_CODE 1)
 add_sanitizers(mcd_test_util)
 

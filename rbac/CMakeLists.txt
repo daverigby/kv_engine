@@ -1,4 +1,4 @@
-add_library(memcached_rbac STATIC
+add_static_library_with_pch(memcached_rbac
             privileges.cc
             privilege_database.cc
             ${PROJECT_SOURCE_DIR}/include/memcached/rbac/privilege_database.h

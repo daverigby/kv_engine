@@ -1,4 +1,4 @@
-ADD_EXECUTABLE(memcached_errormap_sanity_check
+add_executable_with_pch(memcached_errormap_sanity_check
                error_map_sanity_check.cc)
 
 TARGET_LINK_LIBRARIES(memcached_errormap_sanity_check memcached_daemon)

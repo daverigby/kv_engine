@@ -1,4 +1,4 @@
-ADD_LIBRARY(xattr STATIC
+add_static_library_with_pch(xattr
             ${PROJECT_SOURCE_DIR}/include/xattr/blob.h
             ${PROJECT_SOURCE_DIR}/include/xattr/key_validator.h
             ${PROJECT_SOURCE_DIR}/include/xattr/utils.h

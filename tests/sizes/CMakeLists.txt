@@ -1,4 +1,4 @@
-ADD_EXECUTABLE(memcached_sizes
+add_executable_with_pch(memcached_sizes
                sizes.cc)
 TARGET_LINK_LIBRARIES(memcached_sizes mcbp memcached_logger)
 

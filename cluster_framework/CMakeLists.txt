@@ -1,4 +1,4 @@
-add_library(cluster_framework STATIC
+add_static_library_with_pch(cluster_framework
             auth_provider_service.cc auth_provider_service.h
             bucket.cc bucket.h
             cluster.cc cluster.h

@@ -1,4 +1,4 @@
-add_library(auditd STATIC
+add_static_library_with_pch(auditd
             audit.cc audit.h
             auditconfig.cc auditconfig.h
             audit_interface.cc

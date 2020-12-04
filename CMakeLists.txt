@@ -142,9 +142,11 @@ ENDIF (BREAKPAD_FOUND)
 add_library(kv_pch_exe OBJECT foo.cc)
 target_precompile_headers(kv_pch_exe PRIVATE precompiled_headers.h)
 
+add_library(kv_pch_static_library OBJECT foo.cc)
+target_precompile_headers(kv_static_library PRIVATE precompiled_headers.h)
+
 #add_library(kv_pch_fPIC OBJECT foo.cc)
 #set_property(TARGET kv_pch_fPIC PROPERTY POSITION_INDEPENDENT_CODE 1)
-#add_library(kv_pch OBJECT foo.cc)
 #add_dependencies(ALL_BUILD kv_pch)
 
 function(add_executable_with_pch name)
@@ -156,6 +158,12 @@ function(add_executable_with_pch name)
     endif()
     add_dependencies(${_name} kv_pch_exe)
     target_precompile_headers(${_name} REUSE_FROM kv_pch_exe)
+endfunction()
+
+function(add_static_library_with_pch name)
+    add_library(${_name} STATIC ${ARGN})
+    add_dependencies(${_name} kv_pch_static_library)
+    target_precompile_headers(${_name} REUSE_FROM kv_pch_static_library)
 endfunction()
 
 ADD_SUBDIRECTORY(etc)

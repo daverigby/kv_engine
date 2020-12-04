@@ -1,4 +1,4 @@
-add_library(statistics STATIC
+add_static_library_with_pch(statistics
         collector.cc
         cbstat_collector.cc
         definitions.cc

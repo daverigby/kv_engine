@@ -19,7 +19,7 @@ add_sanitizers(ep_testsuite_objs)
 # EventuallyPersistentEngine driven by GoogleTest.
 # (We end up compiling most of the src/ files of ep-engine for these unit tests,
 # so simpler / quicker just to link them into a single executable).
-ADD_EXECUTABLE(ep-engine_ep_unit_tests
+add_executable_with_pch(ep-engine_ep_unit_tests
         ep_request_utils.cc
         module_tests/atomic_unordered_map_test.cc
         module_tests/backfill-manager_test.cc
@@ -154,7 +154,7 @@ endif()
 add_sanitizers(ep-engine_ep_unit_tests)
 target_precompile_headers(ep-engine_ep_unit_tests REUSE_FROM memcached)
 
-ADD_EXECUTABLE(ep-engine_couch-fs-stats_test
+add_executable_with_pch(ep-engine_couch-fs-stats_test
         ${EventuallyPersistentEngine_SOURCE_DIR}/src/couch-kvstore/couch-fs-stats.cc
         ${EventuallyPersistentEngine_SOURCE_DIR}/src/configuration.h
         module_tests/couch-fs-stats_test.cc
@@ -173,10 +173,10 @@ TARGET_LINK_LIBRARIES(ep-engine_couch-fs-stats_test
         phosphor)
 add_sanitizers(ep-engine_couch-fs-stats_test)
 
-ADD_EXECUTABLE(ep-engine_misc_test module_tests/misc_test.cc)
+add_executable_with_pch(ep-engine_misc_test module_tests/misc_test.cc)
 TARGET_LINK_LIBRARIES(ep-engine_misc_test mcbp platform)
 
-ADD_EXECUTABLE(ep-engine_string_utils_test
+add_executable_with_pch(ep-engine_string_utils_test
         module_tests/string_utils_test.cc
         ${EventuallyPersistentEngine_SOURCE_DIR}/src/string_utils.cc)
 TARGET_LINK_LIBRARIES(ep-engine_string_utils_test gtest gtest_main platform)
@@ -191,7 +191,7 @@ gtest_discover_tests(ep-engine_ep_unit_tests
 
 ADD_TEST(NAME ep-engine_misc_test COMMAND ep-engine_misc_test)
 
-ADD_EXECUTABLE(ep_testsuite
+add_executable_with_pch(ep_testsuite
                ep_testsuite.cc
                $<TARGET_OBJECTS:ep_testsuite_objs>
                $<TARGET_OBJECTS:mock_dcp>
@@ -210,7 +210,7 @@ TARGET_LINK_LIBRARIES(ep_testsuite
                       ${LIBEVENT_LIBRARIES})
 add_sanitizers(ep_testsuite)
 
-ADD_EXECUTABLE(ep_testsuite_basic
+add_executable_with_pch(ep_testsuite_basic
                ep_testsuite_basic.cc
                $<TARGET_OBJECTS:ep_testsuite_objs>
                $<TARGET_OBJECTS:mock_dcp>
@@ -228,7 +228,7 @@ TARGET_LINK_LIBRARIES(ep_testsuite_basic
                       ${SNAPPY_LIBRARIES})
 add_sanitizers(ep_testsuite_basic)
 
-ADD_EXECUTABLE(ep_testsuite_dcp
+add_executable_with_pch(ep_testsuite_dcp
                ep_testsuite_dcp.cc
                $<TARGET_OBJECTS:ep_testsuite_objs>
                $<TARGET_OBJECTS:mock_dcp>
@@ -246,7 +246,7 @@ TARGET_LINK_LIBRARIES(ep_testsuite_dcp
                       ${SNAPPY_LIBRARIES})
 add_sanitizers(ep_testsuite_dcp)
 
-ADD_EXECUTABLE(ep_testsuite_checkpoint
+add_executable_with_pch(ep_testsuite_checkpoint
                ep_testsuite_checkpoint.cc
                $<TARGET_OBJECTS:ep_testsuite_objs>
                $<TARGET_OBJECTS:engine_testapp>)
@@ -263,7 +263,7 @@ TARGET_LINK_LIBRARIES(ep_testsuite_checkpoint
                       ${SNAPPY_LIBRARIES})
 add_sanitizers(ep_testsuite_checkpoint)
 
-ADD_EXECUTABLE(ep_testsuite_xdcr
+add_executable_with_pch(ep_testsuite_xdcr
                ep_testsuite_xdcr.cc
                $<TARGET_OBJECTS:ep_testsuite_objs>
                $<TARGET_OBJECTS:engine_testapp>)

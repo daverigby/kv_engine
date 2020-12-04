@@ -1,4 +1,4 @@
-add_library(mcbp STATIC
+add_static_library_with_pch(mcbp
             ${Memcached_SOURCE_DIR}/include/mcbp/mcbp.h
             ${Memcached_SOURCE_DIR}/include/mcbp/protocol/datatype.h
             ${Memcached_SOURCE_DIR}/include/mcbp/protocol/feature.h

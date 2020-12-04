@@ -1,4 +1,4 @@
-add_library(cbcrypto STATIC
+add_static_library_with_pch(cbcrypto
             cbcrypto.cc
             ${PROJECT_SOURCE_DIR}/include/cbcrypto/cbcrypto.h)
 

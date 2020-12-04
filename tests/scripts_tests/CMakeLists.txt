@@ -1,7 +1,7 @@
 IF(NOT WIN32)
     INCLUDE_DIRECTORIES(${JEMALLOC_INCLUDE_DIR})
 
-    ADD_EXECUTABLE(jemalloc_allocator_stats
+    add_executable_with_pch(jemalloc_allocator_stats
             jemalloc_allocator_stats.cc)
 
     TARGET_LINK_LIBRARIES(jemalloc_allocator_stats platform ${JEMALLOC_LIBRARIES})

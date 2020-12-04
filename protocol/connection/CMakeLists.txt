@@ -1,4 +1,4 @@
-ADD_LIBRARY(mc_client_connection STATIC
+add_static_library_with_pch(mc_client_connection
             client_connection.h
             client_connection.cc
             client_connection_map.cc

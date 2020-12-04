@@ -427,7 +427,7 @@ if (NOT EP_BYPASS_TESTS)
     # While ep_perfsuite is arguably a "test" and hence should live under
     # tests/, we *don't* want optimizations disabled for it hence keep in
     # this directory.
-    ADD_EXECUTABLE(ep_perfsuite
+    add_executable_with_pch(ep_perfsuite
                    tests/ep_perfsuite.cc
                    $<TARGET_OBJECTS:ep_testsuite_objs>
                    $<TARGET_OBJECTS:mock_dcp>
@@ -444,7 +444,7 @@ if (NOT EP_BYPASS_TESTS)
             ${LIBEVENT_LIBRARIES})
     add_sanitizers(ep_perfsuite)
 
-    ADD_EXECUTABLE(ep_engine_benchmarks
+    add_executable_with_pch(ep_engine_benchmarks
                    benchmarks/access_scanner_bench.cc
                    benchmarks/benchmark_memory_tracker.cc
                    benchmarks/checkpoint_iterator_bench.cc
@@ -501,7 +501,7 @@ if (NOT EP_BYPASS_TESTS)
 
     add_sanitizers(ep_engine_benchmarks)
 
-    ADD_EXECUTABLE(ep-engine_sizes src/sizes.cc
+    add_executable_with_pch(ep-engine_sizes src/sizes.cc
                    $<TARGET_OBJECTS:ep_objs>)
     TARGET_LINK_LIBRARIES(ep-engine_sizes JSON_checker hdr_histogram_static
                           engine_utilities ep-engine_collections ${EP_STORAGE_LIBS}

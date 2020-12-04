@@ -1,4 +1,4 @@
-ADD_EXECUTABLE(memcached_executor_test
+add_executable_with_pch(memcached_executor_test
                executor_test.cc)
 TARGET_LINK_LIBRARIES(memcached_executor_test memcached_daemon gtest gmock)
 add_sanitizers(memcached_executor_test)

@@ -1,4 +1,4 @@
-add_library(ewouldblock_engine STATIC
+add_static_library_with_pch(ewouldblock_engine
             ewouldblock_engine.h
             ewouldblock_engine_public.h
             ewouldblock_engine.cc)

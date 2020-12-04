@@ -2,7 +2,7 @@ include(CouchbaseGoogleTest)
 
 INCLUDE_DIRECTORIES(AFTER ${Platform_SOURCE_DIR}/external)
 
-ADD_EXECUTABLE(generate_test_cbsaslpw generate_test_cbsaslpw.cc)
+add_executable_with_pch(generate_test_cbsaslpw generate_test_cbsaslpw.cc)
 TARGET_LINK_LIBRARIES(generate_test_cbsaslpw cbsasl platform
                       ${OPENSSL_LIBRARIES})
 add_sanitizers(generate_test_cbsaslpw)
