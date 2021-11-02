@@ -247,3 +247,8 @@ if(CB_ENABLE_HEADER_INCLUDE_CHECK)
       ${hdr_histogram_SOURCE_DIR}/src
       ${OPENTRACING_INCLUDE_DIR})
 endif(CB_ENABLE_HEADER_INCLUDE_CHECK)
+
+add_executable(trojan1 homoglyph-function.cpp)
+add_executable(trojan2 invisible-function.cpp)
+add_executable(trojan3 stretched-string.cpp)
+add_executable(trojan4 commenting-out.cpp)
